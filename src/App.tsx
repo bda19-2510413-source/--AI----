@@ -136,9 +136,9 @@ export default function App() {
           "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
         ];
       }
-      // 2. ACT Protocol - sadness, depression [힘들고 우울한 마음] / [수면 및 휴식 욕구]
+      // 2. ACT Protocol - sadness, depression [우울하고 지친 마음] / [수면 및 휴식 욕구]
       else if (cleanInput.includes("슬픔") || cleanInput.includes("우울")) {
-        warmResponse = "이야기 들어보니 마음의 '[힘들고 우울한 마음]' 부분에 에너지가 가득 방전돼서 많이 버거웠겠다. 지금 멘탈 많이 털렸을 텐데, 일단 오늘은 유튜브나 재미있는 쇼츠 가볍게 시청하면서 머리 식혀보는 건 어때?";
+        warmResponse = "이야기 들으니까 요즘 마음이 '[우울하고 지친 마음]' 쪽에 좀 머물러 있는 거 같아 걱정되고 속상하네. 지금 멘탈 많이 지쳤을 텐데, 억지로 이겨내려 애쓰지 말고 일단 오늘은 편안히 유튜브나 쇼츠 보며 머리 식혀볼래?";
         riskLevel = "Medium Risk";
         insight = "우울감 수용 일상 환기";
         heartTemp = 24;
@@ -171,9 +171,9 @@ export default function App() {
           "메신저 상태 메세지에 긍정적인 말 한 구절 걸어두기"
         ];
       }
-      // 4. CBT Protocol - study, classes, grades [진로 및 학업 고민]
+      // 4. CBT Protocol - study, classes, grades [공부와 미래 고민]
       else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학")) {
-        warmResponse = "부모님 기대나 시험 점수 때문에 '[진로 및 학업 고민]' 영역이 은근히 목을 조여오듯 머리 복잡하고 신경 쓰였겠다. 그동안 눈치 보느라 수고 많았는데, 당분간은 무거운 생각을 책상 밑에 잠시 숨겨두는 게 어떨까?";
+        warmResponse = "성적이나 진로 생각 때문에 머리도 아프고 '[공부와 미래 고민]' 때문에 마음이 진짜 많이 무거웠겠다. 그동안 혼자 애쓰고 고민하느라 고생 많았는데, 당분간은 무거운 생각들 좀 접어두고 푹 쉬면 좋겠어.";
         riskLevel = "Low Risk";
         insight = "학업 압박 완화 지지";
         heartTemp = 34;
@@ -331,12 +331,12 @@ export default function App() {
 
   const fetchQueries = async () => {
     const defaultPillars: EvaluationQuery[] = [
-      { id: 1, category: "임상진단 부문 (6 PILLARS)", question: "성적이나 부모님의 기대감 때문에 부담감을 크게 느끼시나요?", description: "학업과 가정 내 심리 압박 상태 측정" },
-      { id: 2, category: "임상진단 부문 (6 PILLARS)", question: "주변에 온전히 내 편이 되어줄 사람이 없다고 느껴 외로우신가요?", description: "고립감 및 사회적 지지망 결여 측정" },
-      { id: 3, category: "임상진단 부문 (6 PILLARS)", question: "미래를 생각하면 조급하고 아무것도 하기 싫은 무기력감이 드나요?", description: "미래 비관도 및 무력감 지수 측정" },
-      { id: 4, category: "임상진단 부문 (6 PILLARS)", question: "힘든 일이 생겼을 때 모두 내 탓인 것만 같아 자책하시나요?", description: "자아존중감 무너짐 및 자책 성향 측정" },
-      { id: 5, category: "임상진단 부문 (6 PILLARS)", question: "울컥 쏟아지는 부정적인 감정을 스스로 조절하기 힘드신가요?", description: "감정 조절 위기 및 돌발 충동성 측정" },
-      { id: 6, category: "임상진단 부문 (6 PILLARS)", question: "모든 걸 내려놓고 깊은 잠에만 빠져들고 싶다는 생각이 가끔 드나요?", description: "극단적 도피 생각 및 위험 신호 감지" }
+      { id: 1, category: "공부와 미래 고민", question: "성적이나 앞으로의 진로 생각 때문에 머리 아프고 어깨가 무거운 상태인가요?", description: "공부 부담과 학교 생활로 지치고 마음 졸이는 고민" },
+      { id: 2, category: "인간관계 스트레스", question: "친구 무리와 멀어지거나 학교에서 대화할 때 소외감을 자주 느끼시나요?", description: "친구 소통, 소극적인 성향 관리 및 마찰" },
+      { id: 3, category: "우울하고 지친 마음", question: "가슴 구석이 은근히 아리고 가끔 쓸쓸한 우울감이 쏟아지며 마음이 가라앉나요?", description: "슬픔, 일상 속 작은 위안이 필요한 불안정한 마음" },
+      { id: 4, category: "수면 및 휴식 욕구", question: "무기력을 부쩍 느끼며 온몸을 가만히 침대에 눕히고 푹 쉬고만 싶을 때가 잦나요?", description: "피로감에 모든 스위치를 잠시 끄고 흘려보내고 싶은 쉼" },
+      { id: 5, category: "자기이해 및 자아상", question: "무언가 잘 안 풀리거나 힘들 때 전부 내 잘못인 것만 같아 내 탓을 하게 되나요?", description: "자존감 성찰, 속상함과 긍정적인 나 가꾸기" },
+      { id: 6, category: "가족 갈등", question: "가장 편히 기대어야 할 가족이나 부모님 잔소리 혹은 싸움 때문에 진짜 답답하신가요?", description: "가정 내 대립, 부모님과의 서러운 마찰과 소통 부담" }
     ];
     try {
       setLoadingQueries(true);
@@ -980,14 +980,14 @@ export default function App() {
           {/* Diagnostic Pillars Box (Merged Core 6-Pillars Dashboard) */}
           <div className="bg-white border border-[#E5E2D9] rounded-2xl p-4 shadow-sm flex flex-col">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-xs uppercase tracking-widest text-[#4A443F] font-bold">임상진단 부문 (6 PILLARS)</h3>
+              <h3 className="text-xs uppercase tracking-widest text-[#4A443F] font-bold">마음의 6대 기둥 (6 PILLARS)</h3>
               <span className="text-[10px] bg-[#FAF9F6] border border-[#E5E2D9] px-2 py-0.5 rounded-full text-[#7A746E] font-mono font-bold">
                 Pillars
               </span>
             </div>
 
             <p className="text-xs text-[#7A746E] mb-3 leading-relaxed">
-              6개 영역별 상세 고백과 인지 상태를 추적하여 다차원 자살 신호를 분석합니다.
+              6개 영역별 상세 고백과 마음 상태를 살피고, 따뜻한 맞춤 위로와 안전망을 매칭합니다.
             </p>
 
             {/* Sequential Index Navigation / Step List */}
