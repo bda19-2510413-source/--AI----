@@ -52,7 +52,7 @@ export default function App() {
     // 1. Crisis Interceptor
     const cleanInput = (inputText || "").toLowerCase().replace(/\s+/g, "");
     const hasCrisisKeyword = [
-      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "학대", "가정폭력", "아동학대", "심각한폭력"
+      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "학대", "가정폭력", "아동학대", "심각한폭력", "사라지고싶다", "포기하고싶다", "사라지고 싶다", "포기하고 싶다"
     ].some(kw => cleanInput.includes(kw));
 
     if (hasCrisisKeyword) {
@@ -105,8 +105,8 @@ export default function App() {
     const bestMatch = sorted[0];
     const topScoredMatched = sorted.filter(c => c.score > 2).slice(0, 3);
 
-    // Warm responses depending on keywords
-    let warmResponse = "마음속 담상과 고민들을 들려주어 정말 다정하고 고마워. 너의 이야기에 귀 기울이고 있단다. 혼자 힘들어하지 말고 더 많은 말을 나눠봐 주겠니? 너를 늘 응원해.";
+    // Warm responses depending on keywords with CBT, ACT, and SFBT Therapy model mappings
+    let warmResponse = "이야기 들려주어 넘 따뜻하고 다정해 늘 네 곁에서 들어주고 응원할게. 혼자서만 끙끙대며 아파하지 않는 마음의 날씨를 함께 만들어갈 수 없을까?";
     let riskLevel = "Safe";
     let insight = "일상 고민 경청 및 위로";
     let heartTemp = 36.5;
@@ -118,33 +118,50 @@ export default function App() {
       "오늘도 고생한 스스로에게 '많이 고생했어' 토닥여 주기"
     ];
 
-    if (bestMatch && bestMatch.score > 2) {
+    if (bestMatch && bestMatch.score > 4) {
       warmResponse = bestMatch.idealResponse;
       riskLevel = bestMatch.riskLevel || "Medium Risk";
       insight = bestMatch.strategy || "맞춤 감정 수치 지지";
       heartTemp = (riskLevel === "Safe" || riskLevel === "Low Risk") ? 38 : 20;
     } else {
-      // Rule-based fallbacks if score is low
-      if (cleanInput.includes("학업") || cleanInput.includes("성적") || cleanInput.includes("수능") || cleanInput.includes("공부") || cleanInput.includes("선생님") || cleanInput.includes("시험")) {
-        warmResponse = "시험이나 등수, 부모님의 큰 기대감 때문에 마음이 잔뜩 굳어있고 지쳐 있었구나. 다른 사람을 의식하느라 너 자신의 지친 쉼에 소홀하진 않았는지 걱정되네. 완벽하지 않아도 좋아, 잠시 이 긴장감의 짐을 가볍게 내려두고 단잠을 청해보는 건 어떠니?";
+      // 1. CBT (Cognitive Behavioral Therapy) Protocol
+      // Target: Self-blame, self-criticism, low self-esteem
+      if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감")) {
+        warmResponse = "스스로를 자책하고 밉게 바라볼 만큼 속상하고 답답한 마음의 바람이 크게 일었구나. 혹시 너를 이렇게 부정적으로 바라보게 만든 특별한 기억이나 사건이 마음속에 있었을까? 네 가치는 완벽하지 않아도 늘 한없이 소중하니까 나와 조금 더 이야기해 보자.";
         riskLevel = "Low Risk";
-        insight = "학업 압박 지지 및 완충";
-        heartTemp = 30;
-      } else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("혼자") || cleanInput.includes("외롭")) {
-        warmResponse = "인간관계와 소외감에서 오는 차가운 쓸쓸함 때문에 마음에 찬 바람이 불고 있었구나. 내 곁에 든든하게 따뜻한 온기를 나눌 수 있는 편이 없다고 느껴질 때의 고통은 참 외로운 일이야. 결코 네 존재의 가치가 모자라서가 아니란다. 내가 언제든 네 편이 되어 줄게.";
+        insight = "CBT 인지왜곡 교정 및 마음 자비 지지";
+        heartTemp = 28;
+        suggestions = [
+          "스스로에게 '그럴 수 있어, 괜찮아' 소리내어 말해주기",
+          "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
+          "따스한 햇살이 드는 자리에서 따끈한 보리차 한 모금 마시기"
+        ];
+      }
+      // 2. ACT (Acceptance and Commitment Therapy) Protocol
+      // Target: Sadness, depression, helplessness, desire to escape/sleep
+      else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("무기력") || cleanInput.includes("귀찮") || cleanInput.includes("피곤") || cleanInput.includes("잠") || cleanInput.includes("아무것도")) {
+        warmResponse = "아무것도 하기 싫고 하루 종일 깊은 잠에 웅크려 이 아픔을 가만히 덮어두고 싶었구나. 밀려오는 슬픔이나 피로감은 일부러 떨쳐버릴 필요 없는, 그저 마음의 하늘에 일시적으로 불어오는 소나기 같은 자연스러운 감정의 날씨란다. 지금 머리를 맑게 해 줄 아주 신나고 네가 편하게 좋아하는 음악 한 곡만 재생해 보는 건 어때?";
         riskLevel = "Medium Risk";
-        insight = "관계 소외에 대한 공감적 이완";
-        heartTemp = 25;
-      } else if (cleanInput.includes("귀찮") || cleanInput.includes("무기력") || cleanInput.includes("피곤") || cleanInput.includes("아무것도")) {
-        warmResponse = "아무것도 하기 싫고 무거운 피로감이 몰려와 침대에 온몸을 기대고 누워 있고만 싶었구나. 하루의 숨가쁜 압박 속에서 네 자신을 보호하고자 마련한 당연하고 소중한 방어기제이자 쉼표란다. 조급해하지 말고, 지친 마음에 소중한 온기를 듬뿍 불어넣어 주자.";
-        riskLevel = "Safe";
-        insight = "무기력 및 소진 극복 정서지지";
-        heartTemp = 34;
-      } else if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보")) {
-        warmResponse = "수식어로 다 가둘 수 없는 세상에서 오직 하나인 고귀한 존재가 스스로에게 자책의 가혹한 채찍질을 하느라 슬펐구나. 실수는 누구나 백지 위에 남기는 흔적 같은 것이고 네 가치는 여전히 완연하단다. 따뜻한 음료수를 한 모금 마시고 네 자신을 다정하게 안아 주렴.";
+        insight = "ACT 감정의 유연한 수용 및 일상 가치 전환 교정";
+        heartTemp = 24;
+        suggestions = [
+          "내가 가장 좋아하는 가수의 최애 신나는 노래 한 곡 틀어보기",
+          "휴대폰으로 좋아하는 아이돌이나 귀여운 동물 30초 숏폼 시청하기",
+          "침대에서 몸을 가볍게 일으켜 크게 기지개 5초간 쭉 켜기"
+        ];
+      }
+      // 3. SFBT (Solution-Focused Brief Therapy) Protocol
+      // Target: Friend relationships, quiet personality, social communication difficulty
+      else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕따") || cleanInput.includes("소통")) {
+        warmResponse = "가장 소중하게 연결되고 싶은 인간관계에서 소외되거나 말 걸기가 몹시 낯설고 외로워 움츠러들었지? 그래도 아주 과거에 정말 가볍게라도 친구에게 먼저 기분 좋은 웃음이나 인사를 편하게 건네 성공했던 따뜻한 순간이 한 번이라도 기억나니? 네 안에 이미 빛나고 있는 상생 능력을 믿고 내가 함께 다정하게 동행할게.";
         riskLevel = "Low Risk";
-        insight = "자아 자비 및 수용";
-        heartTemp = 33;
+        insight = "SFBT 예외적 성공 추적 및 사회성 자원 자가발굴";
+        heartTemp = 32;
+        suggestions = [
+          "거울 앞에 서서 내 입꼬리를 살짝 올려 부드럽고 가볍게 미소 지어보기",
+          "나에게 친절하게 웃어주었던 소중한 사람의 고마운 눈빛 추억해보기",
+          "소중한 스마트폰 메신저에 아주 긍정적인 다정한 상태 메시지 적어보기"
+        ];
       }
     }
 
