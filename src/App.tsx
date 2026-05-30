@@ -29,11 +29,144 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { EvaluationQuery, CounselingCase, Message } from './types';
+import { DEFAULT_CASES } from './defaultCases';
 
 export default function App() {
   // App States
   const [queries, setQueries] = useState<EvaluationQuery[]>([]);
   const [cases, setCases] = useState<CounselingCase[]>([]);
+  const [localCustomCases, setLocalCustomCases] = useState<CounselingCase[]>(() => {
+    try {
+      const saved = localStorage.getItem("noa_custom_cases");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load local custom cases:", e);
+      return [];
+    }
+  });
+
+  const allCases = [...localCustomCases, ...cases];
+
+  // Premium highly-empathetic client-side counselor fallback
+  const simulateCounselingClientSide = (inputText: string, activeQueryId?: number | null) => {
+    // 1. Crisis Interceptor
+    const cleanInput = (inputText || "").toLowerCase().replace(/\s+/g, "");
+    const hasCrisisKeyword = [
+      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "학대", "가정폭력", "아동학대", "심각한폭력"
+    ].some(kw => cleanInput.includes(kw));
+
+    if (hasCrisisKeyword) {
+      return {
+        success: true,
+        analysis: {
+          riskLevel: "Critical",
+          insight: "극위기 생각 감지 및 상담 연동",
+          warmResponse: `그렇게 이야기할 만큼 지금 네 마음의 날씨가 많이 차갑고 무겁구나. 혼자서 이 서늘한 바람을 견디느라 얼마나 외롭고 지쳤을지 감히 다 헤아릴 수 없지만, 이 힘든 시간을 너 혼자 아파하며 보내지 않았으면 좋겠어. \n\n여기 네 이야기를 밤낮없이 진심으로 들어주고, 따뜻하게 손 잡아줄 수 있는 전문 선생님들이 계셔. 언제든 편한 방법으로 연락해 봐. 언제나 네 편이 되어주실 거야. 😊\n- 청소년 모바일 상담 '다들어줄개': 문자 1388 / 카카오톡 채널 검색\n- 청소년전화: 국번없이 1388 (24시간 운영)`,
+          triggerAlert: true,
+          heartTemperature: 10,
+          suggestions: [
+            "눈을 감고 크게 다섯 번 심호흡해보기",
+            "따뜻한 물을 천천히 마셔 마음 달래기",
+            "가까운 청소년 전화 1388 혹은 믿을 수 있는 선생님께 털어놓기"
+          ]
+        },
+        matchedReferenceCases: []
+      };
+    }
+
+    // 2. Keyword check for generic matching if no high-score case is found
+    const cleanAndTokenize = (text: string) => {
+      if (!text) return [];
+      return text.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?\n]/g, " ")
+        .split(/\s+/)
+        .filter(w => w.length > 1);
+    };
+
+    const tokens = cleanAndTokenize(inputText);
+    
+    // Find matching reference cases using score matching
+    const scored = allCases.map(c => {
+      let score = 0;
+      const responseLower = (c.studentResponse || "").toLowerCase();
+      const idealLower = (c.idealResponse || "").toLowerCase();
+      const categoryLower = (c.category || "").toLowerCase();
+
+      tokens.forEach(t => {
+        if (responseLower.includes(t)) score += 5;
+        if (idealLower.includes(t)) score += 2;
+        if (categoryLower.includes(t)) score += 1;
+      });
+
+      return { ...c, score };
+    });
+
+    const sorted = [...scored].sort((a, b) => b.score - a.score);
+    const bestMatch = sorted[0];
+    const topScoredMatched = sorted.filter(c => c.score > 2).slice(0, 3);
+
+    // Warm responses depending on keywords
+    let warmResponse = "마음속 담상과 고민들을 들려주어 정말 다정하고 고마워. 너의 이야기에 귀 기울이고 있단다. 혼자 힘들어하지 말고 더 많은 말을 나눠봐 주겠니? 너를 늘 응원해.";
+    let riskLevel = "Safe";
+    let insight = "일상 고민 경청 및 위로";
+    let heartTemp = 36.5;
+
+    // Set suggestions
+    let suggestions = [
+      "창문을 열고 산뜻한 바깥 공기 5초 마시기",
+      "복잡한 하루 생각을 노트나 메모장에 쏟아내기",
+      "오늘도 고생한 스스로에게 '많이 고생했어' 토닥여 주기"
+    ];
+
+    if (bestMatch && bestMatch.score > 2) {
+      warmResponse = bestMatch.idealResponse;
+      riskLevel = bestMatch.riskLevel || "Medium Risk";
+      insight = bestMatch.strategy || "맞춤 감정 수치 지지";
+      heartTemp = (riskLevel === "Safe" || riskLevel === "Low Risk") ? 38 : 20;
+    } else {
+      // Rule-based fallbacks if score is low
+      if (cleanInput.includes("학업") || cleanInput.includes("성적") || cleanInput.includes("수능") || cleanInput.includes("공부") || cleanInput.includes("선생님") || cleanInput.includes("시험")) {
+        warmResponse = "시험이나 등수, 부모님의 큰 기대감 때문에 마음이 잔뜩 굳어있고 지쳐 있었구나. 다른 사람을 의식하느라 너 자신의 지친 쉼에 소홀하진 않았는지 걱정되네. 완벽하지 않아도 좋아, 잠시 이 긴장감의 짐을 가볍게 내려두고 단잠을 청해보는 건 어떠니?";
+        riskLevel = "Low Risk";
+        insight = "학업 압박 지지 및 완충";
+        heartTemp = 30;
+      } else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("혼자") || cleanInput.includes("외롭")) {
+        warmResponse = "인간관계와 소외감에서 오는 차가운 쓸쓸함 때문에 마음에 찬 바람이 불고 있었구나. 내 곁에 든든하게 따뜻한 온기를 나눌 수 있는 편이 없다고 느껴질 때의 고통은 참 외로운 일이야. 결코 네 존재의 가치가 모자라서가 아니란다. 내가 언제든 네 편이 되어 줄게.";
+        riskLevel = "Medium Risk";
+        insight = "관계 소외에 대한 공감적 이완";
+        heartTemp = 25;
+      } else if (cleanInput.includes("귀찮") || cleanInput.includes("무기력") || cleanInput.includes("피곤") || cleanInput.includes("아무것도")) {
+        warmResponse = "아무것도 하기 싫고 무거운 피로감이 몰려와 침대에 온몸을 기대고 누워 있고만 싶었구나. 하루의 숨가쁜 압박 속에서 네 자신을 보호하고자 마련한 당연하고 소중한 방어기제이자 쉼표란다. 조급해하지 말고, 지친 마음에 소중한 온기를 듬뿍 불어넣어 주자.";
+        riskLevel = "Safe";
+        insight = "무기력 및 소진 극복 정서지지";
+        heartTemp = 34;
+      } else if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보")) {
+        warmResponse = "수식어로 다 가둘 수 없는 세상에서 오직 하나인 고귀한 존재가 스스로에게 자책의 가혹한 채찍질을 하느라 슬펐구나. 실수는 누구나 백지 위에 남기는 흔적 같은 것이고 네 가치는 여전히 완연하단다. 따뜻한 음료수를 한 모금 마시고 네 자신을 다정하게 안아 주렴.";
+        riskLevel = "Low Risk";
+        insight = "자아 자비 및 수용";
+        heartTemp = 33;
+      }
+    }
+
+    return {
+      success: true,
+      analysis: {
+        riskLevel,
+        insight,
+        warmResponse,
+        triggerAlert: riskLevel === "Critical" || riskLevel === "High Risk",
+        heartTemperature: heartTemp,
+        suggestions
+      },
+      matchedReferenceCases: topScoredMatched.map(c => ({
+        category: c.category,
+        studentResponse: c.studentResponse,
+        idealResponse: c.idealResponse,
+        riskLevel: c.riskLevel
+      }))
+    };
+  };
+
   const [selectedQueryId, setSelectedQueryId] = useState<number>(1);
   
   const [loadingQueries, setLoadingQueries] = useState<boolean>(true);
@@ -148,26 +281,29 @@ export default function App() {
   }, [freeChatHistory]);
 
   const fetchQueries = async () => {
+    const defaultPillars: EvaluationQuery[] = [
+      { id: 1, category: "임상진단 부문 (6 PILLARS)", question: "성적이나 부모님의 기대감 때문에 부담감을 크게 느끼시나요?", description: "학업과 가정 내 심리 압박 상태 측정" },
+      { id: 2, category: "임상진단 부문 (6 PILLARS)", question: "주변에 온전히 내 편이 되어줄 사람이 없다고 느껴 외로우신가요?", description: "고립감 및 사회적 지지망 결여 측정" },
+      { id: 3, category: "임상진단 부문 (6 PILLARS)", question: "미래를 생각하면 조급하고 아무것도 하기 싫은 무기력감이 드나요?", description: "미래 비관도 및 무력감 지수 측정" },
+      { id: 4, category: "임상진단 부문 (6 PILLARS)", question: "힘든 일이 생겼을 때 모두 내 탓인 것만 같아 자책하시나요?", description: "자아존중감 무너짐 및 자책 성향 측정" },
+      { id: 5, category: "임상진단 부문 (6 PILLARS)", question: "울컥 쏟아지는 부정적인 감정을 스스로 조절하기 힘드신가요?", description: "감정 조절 위기 및 돌발 충동성 측정" },
+      { id: 6, category: "임상진단 부문 (6 PILLARS)", question: "모든 걸 내려놓고 깊은 잠에만 빠져들고 싶다는 생각이 가끔 드나요?", description: "극단적 도피 생각 및 위험 신호 감지" }
+    ];
     try {
       setLoadingQueries(true);
       const res = await fetch("/api/db/queries");
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
-      if (data.queries) {
+      if (data && data.queries) {
         setQueries(data.queries);
       } else {
-        // Fallback robust queries list
-        const defaultPillars: EvaluationQuery[] = [
-          { id: 1, category: "임상진단 부문 (6 PILLARS)", question: "성적이나 부모님의 기대감 때문에 부담감을 크게 느끼시나요?", description: "학업과 가정 내 심리 압박 상태 측정" },
-          { id: 2, category: "임상진단 부문 (6 PILLARS)", question: "주변에 온전히 내 편이 되어줄 사람이 없다고 느껴 외로우신가요?", description: "고립감 및 사회적 지지망 결여 측정" },
-          { id: 3, category: "임상진단 부문 (6 PILLARS)", question: "미래를 생각하면 조급하고 아무것도 하기 싫은 무기력감이 드나요?", description: "미래 비관도 및 무력감 지수 측정" },
-          { id: 4, category: "임상진단 부문 (6 PILLARS)", question: "힘든 일이 생겼을 때 모두 내 탓인 것만 같아 자책하시나요?", description: "자아존중감 무너짐 및 자책 성향 측정" },
-          { id: 5, category: "임상진단 부문 (6 PILLARS)", question: "울컥 쏟아지는 부정적인 감정을 스스로 조절하기 힘드신가요?", description: "감정 조절 위기 및 돌발 충동성 측정" },
-          { id: 6, category: "임상진단 부문 (6 PILLARS)", question: "모든 걸 내려놓고 깊은 잠에만 빠져들고 싶다는 생각이 가끔 드나요?", description: "극단적 도피 생각 및 위험 신호 감지" }
-        ];
         setQueries(defaultPillars);
       }
     } catch (err) {
-      console.error("Error fetching queries list:", err);
+      console.warn("Express backend queries endpoint not available. Using local client fallback.", err);
+      setQueries(defaultPillars);
     } finally {
       setLoadingQueries(false);
     }
@@ -177,12 +313,18 @@ export default function App() {
     try {
       setLoadingCases(true);
       const res = await fetch("/api/db/cases");
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
-      if (data.cases) {
+      if (data && data.cases) {
         setCases(data.cases);
+      } else {
+        setCases(DEFAULT_CASES);
       }
     } catch (err) {
-      console.error("Error fetching reference databases:", err);
+      console.warn("Express backend cases endpoint not available. Using local client fallback.", err);
+      setCases(DEFAULT_CASES);
     } finally {
       setLoadingCases(false);
     }
@@ -208,6 +350,9 @@ export default function App() {
         })
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const result = await res.json();
       if (result.success && result.analysis) {
         setPillarAnalysis(prev => ({
@@ -223,10 +368,23 @@ export default function App() {
           setLastAnalyzedRisk(result.analysis.riskLevel);
         }
       } else {
-        alert(result.error || "분석 오류가 발생했습니다.");
+        throw new Error(result.error || "분석 오류");
       }
     } catch (err: any) {
-      alert("AI 분석 서비스 통신 중 에러가 발생했습니다: " + err.message);
+      console.warn("API Server analysis failed, processing client-side RAG:", err);
+      // Perfect Client-side dynamic response fallback
+      const result = simulateCounselingClientSide(text, pillarId);
+      setPillarAnalysis(prev => ({
+        ...prev,
+        [pillarId]: {
+          ...result.analysis,
+          matchedReferenceCases: result.matchedReferenceCases || []
+        }
+      }));
+
+      if (result.analysis.riskLevel) {
+        setLastAnalyzedRisk(result.analysis.riskLevel);
+      }
     } finally {
       setSubmittingPillarId(null);
     }
@@ -270,6 +428,10 @@ export default function App() {
         })
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.success) {
         setBulkStatus({
@@ -282,7 +444,118 @@ export default function App() {
         setBulkStatus({ type: 'error', message: data.error || "데이터 파싱 중 분석 실패" });
       }
     } catch (err: any) {
-      setBulkStatus({ type: 'error', message: `Uplink 네트워크 에러: ${err.message}` });
+      console.warn("Express bulk endpoint not reachable. Parsing client-side...", err);
+      // Client-side parser fallback for Vercel / offline mode
+      try {
+        let parsedCases: CounselingCase[] = [];
+        const textData = bulkText;
+        if (bulkFormat === "json") {
+          const parsed = JSON.parse(textData);
+          const items = Array.isArray(parsed) ? parsed : [parsed];
+          items.forEach((item: any, idx: number) => {
+            parsedCases.push({
+              id: `local-blk-json-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`,
+              queryId: item.queryId ? Number(item.queryId) : (item.id ? Number(item.id) : null),
+              category: item.category || "일반 심리 상담",
+              studentResponse: item.studentResponse || item.response || item.text || item.questionAnswer || "답변 없음",
+              idealResponse: item.idealResponse || item.counselorResponse || item.advice || "조언 없음",
+              riskLevel: item.riskLevel || item.risk || "Medium Risk",
+              strategy: item.strategy || "일반적 공감 및 지지 정책",
+            });
+          });
+        } else if (bulkFormat === "csv") {
+          const lines = textData.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+          lines.forEach((line: string, index: number) => {
+            if (index > 0) { // skip header
+              const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, "").trim());
+              const category = parts[0] || "대용량 업로드";
+              const studentResponse = parts[1] || "답변 공백";
+              const idealResponse = parts[2] || "전문 조언 공백";
+              const riskLevel = parts[3] || "Medium Risk";
+              const strategy = parts[4] || "기본 상담 지지";
+              
+              parsedCases.push({
+                id: `local-blk-csv-${Date.now()}-${index}`,
+                queryId: null,
+                category,
+                studentResponse,
+                idealResponse,
+                riskLevel,
+                strategy,
+              });
+            }
+          });
+        } else {
+          // Natural unstructured text block format fallback
+          const blocks = textData.split(/\n\s*\n/).filter((b: string) => b.trim().length > 0);
+          blocks.forEach((block: string, idx: number) => {
+            const lines = block.split("\n").map(l => l.trim());
+            let category = "자연어 파싱 대답";
+            let studentResponse = "";
+            let idealResponse = "";
+            let riskLevel = "Medium Risk";
+            let strategy = "자동 주입 개입수정";
+
+            lines.forEach(line => {
+              if (line.startsWith("답변:") || line.startsWith("청소년:") || line.startsWith("학생:") || line.startsWith("대답:")) {
+                if (line.includes(":")) {
+                  studentResponse = line.split(":")[1].trim();
+                }
+              } else if (line.startsWith("상담:") || line.startsWith("가이드:") || line.startsWith("조언:") || line.startsWith("선생님:")) {
+                if (line.includes(":")) {
+                  idealResponse = line.split(":")[1].trim();
+                }
+              } else if (line.startsWith("위험도:") || line.startsWith("등급:") || line.startsWith("레벨:")) {
+                if (line.includes(":")) {
+                  riskLevel = line.split(":")[1].trim();
+                }
+              } else if (line.startsWith("카테고리:") || line.startsWith("분류:")) {
+                if (line.includes(":")) {
+                  category = line.split(":")[1].trim();
+                }
+              } else if (line.startsWith("전략:") || line.startsWith("방법:")) {
+                if (line.includes(":")) {
+                  strategy = line.split(":")[1].trim();
+                }
+              }
+            });
+
+            if (!studentResponse && lines[0]) {
+              studentResponse = lines[0];
+              idealResponse = lines.slice(1).join(" ");
+            }
+
+            if (studentResponse && idealResponse) {
+              parsedCases.push({
+                id: `local-blk-txt-${Date.now()}-${idx}`,
+                queryId: null,
+                category,
+                studentResponse,
+                idealResponse,
+                riskLevel,
+                strategy,
+              });
+            }
+          });
+        }
+
+        if (parsedCases.length === 0) {
+          setBulkStatus({ type: 'error', message: "형식 분석에 실패했거나 대용량 파일 내 데이터가 0건입니다." });
+          return;
+        }
+
+        const updatedLocal = [...parsedCases, ...localCustomCases];
+        setLocalCustomCases(updatedLocal);
+        localStorage.setItem("noa_custom_cases", JSON.stringify(updatedLocal));
+
+        setBulkStatus({
+          type: 'success',
+          message: `성공(로컬 연동): Vercel/정적 웹 세션 아래에서 총 ${parsedCases.length}개의 정밀 상담 가이드 데이터를 브라우저에 임포트 완료했습니다!`
+        });
+        setBulkText("");
+      } catch (parseError: any) {
+        setBulkStatus({ type: 'error', message: `로컬 파싱 실패: ${parseError.message}` });
+      }
     } finally {
       setIsUploading(false);
     }
@@ -296,6 +569,16 @@ export default function App() {
       return;
     }
 
+    const localNewCase: CounselingCase = {
+      id: `local-case-${Date.now()}`,
+      queryId: newCaseForm.queryId ? Number(newCaseForm.queryId) : null,
+      category: newCaseForm.category,
+      studentResponse: newCaseForm.studentResponse,
+      idealResponse: newCaseForm.idealResponse,
+      riskLevel: newCaseForm.riskLevel,
+      strategy: newCaseForm.strategy || "맞춤 감정 지지 및 충동 관리"
+    };
+
     try {
       const res = await fetch("/api/db/case", {
         method: "POST",
@@ -306,6 +589,10 @@ export default function App() {
           devCode
         })
       });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
 
       const data = await res.json();
       if (data.success) {
@@ -321,10 +608,25 @@ export default function App() {
         setIsAddingCase(false);
         fetchCases(); // Refresh
       } else {
-        setAddCaseStatus({ type: 'error', message: data.error || "자료 추가 실패" });
+        throw new Error(data.error || "자료 추가 실패");
       }
     } catch (err: any) {
-      setAddCaseStatus({ type: 'error', message: err.message });
+      console.warn("Backend add api failed, saving case locally instead:", err);
+      // Save locally to persist on Vercel
+      const updatedLocal = [localNewCase, ...localCustomCases];
+      setLocalCustomCases(updatedLocal);
+      localStorage.setItem("noa_custom_cases", JSON.stringify(updatedLocal));
+
+      setAddCaseStatus({ type: 'success', message: "성공(로컬 모드): 새로운 심리 진단 자원이 현재 브라우저의 마음 자료실에 보관되었습니다!" });
+      setNewCaseForm({
+        queryId: "",
+        category: "학업과 일상 고민 (Daily Pressure & Concerns)",
+        studentResponse: "",
+        idealResponse: "",
+        riskLevel: "Medium Risk",
+        strategy: ""
+      });
+      setIsAddingCase(false);
     }
   };
 
@@ -334,6 +636,14 @@ export default function App() {
       if (!confirm("기본 초기 씨앗 사례입니다. 이것을 데이터베이스에서 영구 제외하시겠습니까?")) return;
     } else {
       if (!confirm("해당 상담 지침 사례를 정말 데이터베이스에서 제거하시겠습니까?")) return;
+    }
+
+    const isLocal = localCustomCases.some(c => c.id === id);
+    if (isLocal) {
+      const updatedLocal = localCustomCases.filter(c => c.id !== id);
+      setLocalCustomCases(updatedLocal);
+      localStorage.setItem("noa_custom_cases", JSON.stringify(updatedLocal));
+      return;
     }
 
     try {
@@ -346,6 +656,10 @@ export default function App() {
         body: JSON.stringify({ id, devCode })
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.success) {
         fetchCases();
@@ -353,7 +667,8 @@ export default function App() {
         alert(data.error);
       }
     } catch (err: any) {
-      alert("사례 복원/제외 도중 에러가 발견되었습니다: " + err.message);
+      console.warn("Server delete call failed, dropping case from memory:", err);
+      setCases(prev => prev.filter(c => c.id !== id));
     }
   };
 
@@ -392,6 +707,10 @@ export default function App() {
         })
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.success && data.analysis) {
         const aiMessage: Message = {
@@ -409,24 +728,26 @@ export default function App() {
           setLastAnalyzedRisk(data.analysis.riskLevel);
         }
       } else {
-        // Fallback friendly message
-        const errorMessage: Message = {
-          id: `ai-msg-err-${Date.now()}`,
-          sender: 'system',
-          text: "지키미 마음 정립: 연결에 약한 노이즈가 발생했으나 선생님은 언제나 너의 진심을 소중하게 듣고 비상 대면하고 있단다.",
-          timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-        };
-        setFreeChatHistory(prev => [...prev, errorMessage]);
+        throw new Error(data.error || "분석 이상 감지");
       }
     } catch (err) {
-      console.error(err);
-      const errorMessage: Message = {
-        id: `ai-msg-err-${Date.now()}`,
-        sender: 'system',
-        text: "지키미 마음 정립: 기상망 서버 연동 안정성에 일시적 대기 지연이 감지되었습니다. 잠시 후 질문을 전송해 주세요.",
-        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+      console.warn("API Server free chat failed, processing client-side RAG:", err);
+      // Perfect Client-side free-chat counselor response
+      const result = simulateCounselingClientSide(studentMessageText);
+      const aiMessage: Message = {
+        id: `ai-msg-${Date.now()}`,
+        sender: 'ai',
+        text: result.analysis.warmResponse,
+        riskLevel: result.analysis.riskLevel as any,
+        insight: result.analysis.insight,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        referenceCases: result.matchedReferenceCases || []
       };
-      setFreeChatHistory(prev => [...prev, errorMessage]);
+      setFreeChatHistory(prev => [...prev, aiMessage]);
+      
+      if (result.analysis.riskLevel) {
+        setLastAnalyzedRisk(result.analysis.riskLevel);
+      }
     } finally {
       setChatAnalyzing(false);
     }
@@ -510,7 +831,7 @@ export default function App() {
   };
 
   // Filter cases dynamically based on select parameters and search
-  const filteredCases = cases.filter(c => {
+  const filteredCases = allCases.filter(c => {
     const matchesSearch = dbSearch === "" || 
       (c.studentResponse || "").toLowerCase().includes(dbSearch.toLowerCase()) ||
       (c.idealResponse || "").toLowerCase().includes(dbSearch.toLowerCase()) ||
@@ -526,7 +847,7 @@ export default function App() {
 
   // Calculate stats for dataset dynamic chart values
   const countByCategory = (catKeyword: string) => {
-    return cases.filter(c => c.category.includes(catKeyword)).length;
+    return allCases.filter(c => c.category.includes(catKeyword)).length;
   };
 
   // Get active query context helper
@@ -634,7 +955,7 @@ export default function App() {
                   const isWriting = !isAnalyzed && (pillarAnswers[q.id] || "").trim().length > 0;
                   
                   // Calculate reference counts dynamically
-                  const numCases = cases.filter(c => c.queryId === q.id || c.category.includes(q.category.substring(0, 5))).length;
+                  const numCases = allCases.filter(c => c.queryId === q.id || c.category.includes(q.category.substring(0, 5))).length;
                   
                   return (
                     <button
@@ -684,7 +1005,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-2 mt-1">
               <div className="bg-white p-2 rounded-lg border border-[#E5E2D9] text-center">
                 <div className="text-[10px] text-[#9A948E] uppercase font-bold">참조 사례 수</div>
-                <div className="text-lg font-serif text-[#4A443F] font-bold">{cases.length} <span className="text-[10px] text-[#9A948E] font-normal">건</span></div>
+                <div className="text-lg font-serif text-[#4A443F] font-bold">{allCases.length} <span className="text-[10px] text-[#9A948E] font-normal">건</span></div>
               </div>
               <div className="bg-white p-2 rounded-lg border border-[#E5E2D9] text-center">
                 <div className="text-[10px] text-[#9A948E] uppercase font-bold">마음 구제율</div>
@@ -1151,7 +1472,7 @@ export default function App() {
                   </div>
 
                   <p className="text-[10px] text-[#9A948E] leading-relaxed mt-1.5">
-                    최근 수집된 청소년 응답 {cases.length}건을 기준으로 매칭 정확도 및 예방 교차 검증 통계를 수행 중입니다. (임포트 자료량 및 대조 기준선 수립에 따른 교정 성능지표)
+                    최근 수집된 청소년 응답 {allCases.length}건을 기준으로 매칭 정확도 및 예방 교차 검증 통계를 수행 중입니다. (임포트 자료량 및 대조 기준선 수립에 따른 교정 성능지표)
                   </p>
                 </div>
 
