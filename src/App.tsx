@@ -52,7 +52,7 @@ export default function App() {
     // 1. Crisis Interceptor
     const cleanInput = (inputText || "").toLowerCase().replace(/\s+/g, "");
     const hasCrisisKeyword = [
-      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "학대", "가정폭력", "아동학대", "심각한폭력", "사라지고싶다", "포기하고싶다", "사라지고 싶다", "포기하고 싶다"
+      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "살기싫다", "사라지고싶다", "포기하고싶다", "사라지고 싶다", "포기하고 싶다"
     ].some(kw => cleanInput.includes(kw));
 
     if (hasCrisisKeyword) {
@@ -60,14 +60,14 @@ export default function App() {
         success: true,
         analysis: {
           riskLevel: "Critical",
-          insight: "극위기 생각 감지 및 상담 연동",
-          warmResponse: `그렇게 이야기할 만큼 지금 네 마음의 날씨가 많이 차갑고 무겁구나. 혼자서 이 서늘한 바람을 견디느라 얼마나 외롭고 지쳤을지 감히 다 헤아릴 수 없지만, 이 힘든 시간을 너 혼자 아파하며 보내지 않았으면 좋겠어. \n\n여기 네 이야기를 밤낮없이 진심으로 들어주고, 따뜻하게 손 잡아줄 수 있는 전문 선생님들이 계셔. 언제든 편한 방법으로 연락해 봐. 언제나 네 편이 되어주실 거야. 😊\n- 청소년 모바일 상담 '다들어줄개': 문자 1388 / 카카오톡 채널 검색\n- 청소년전화: 국번없이 1388 (24시간 운영)`,
+          insight: "위기 반응 감지",
+          warmResponse: `마음이 너무 무겁고 '[힘들고 우울한 마음]'이 깊어져 진짜 다 놓아버리고 싶을 만큼 막막했구나. 혼자서 너무 지치지 말고, 힘들 땐 24시간 열려 있는 청소년전화 1388이나 모바일 상담 '다들어줄개'(문자 1388)로 꼭 연락해서 편안하게 네 속마음을 들려주면 좋겠어.`,
           triggerAlert: true,
           heartTemperature: 10,
           suggestions: [
-            "눈을 감고 크게 다섯 번 심호흡해보기",
-            "따뜻한 물을 천천히 마셔 마음 달래기",
-            "가까운 청소년 전화 1388 혹은 믿을 수 있는 선생님께 털어놓기"
+            "억지로 참지 말고 눈 감고 크게 심호흡하기",
+            "가장 신나는 음악 가만히 틀어서 볼륨 작게 들어보기",
+            "청소년 안전 헬프라인인 1388에 마음 담아 가볍게 털어놓기"
           ]
         },
         matchedReferenceCases: []
@@ -105,8 +105,8 @@ export default function App() {
     const bestMatch = sorted[0];
     const topScoredMatched = sorted.filter(c => c.score > 2).slice(0, 3);
 
-    // Warm responses depending on keywords with CBT, ACT, and SFBT Therapy model mappings
-    let warmResponse = "이야기 들려주어 넘 따뜻하고 다정해 늘 네 곁에서 들어주고 응원할게. 혼자서만 끙끙대며 아파하지 않는 마음의 날씨를 함께 만들어갈 수 없을까?";
+    // Warm responses depending on keywords
+    let warmResponse = "얘기 들어보니까 '[자기이해 및 자아상]' 영역이 한 단계 피곤해져서 마음에 지침이 스며든 것 같아. 지금 너를 가장 편안하게 해주는 취미나 쇼츠를 보며 머리를 가볍게 식혀보면 어떨까?";
     let riskLevel = "Safe";
     let insight = "일상 고민 경청 및 위로";
     let heartTemp = 36.5;
@@ -124,25 +124,23 @@ export default function App() {
       insight = bestMatch.strategy || "맞춤 감정 수치 지지";
       heartTemp = (riskLevel === "Safe" || riskLevel === "Low Risk") ? 38 : 20;
     } else {
-      // 1. CBT (Cognitive Behavioral Therapy) Protocol
-      // Target: Self-blame, self-criticism, low self-esteem
+      // 1. CBT Protocol - self-criticism, low self-esteem [자기이해 및 자아상]
       if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감")) {
-        warmResponse = "스스로를 자책하고 밉게 바라볼 만큼 속상하고 답답한 마음의 바람이 크게 일었구나. 혹시 너를 이렇게 부정적으로 바라보게 만든 특별한 기억이나 사건이 마음속에 있었을까? 네 가치는 완벽하지 않아도 늘 한없이 소중하니까 나와 조금 더 이야기해 보자.";
+        warmResponse = "자기를 너무 미워하게 돼서 진짜 속상하고 많이 답답했겠다, 지금 딱 '[자기이해 및 자아상]' 쪽에 고민이 깊어진 거 같아. 대체 왜 그렇게 생각하게 됐는지 무슨 일 있었는지 나한테만 살짝 말해줄래?";
         riskLevel = "Low Risk";
-        insight = "CBT 인지왜곡 교정 및 마음 자비 지지";
+        insight = "자아상 지지 성찰 유도";
         heartTemp = 28;
         suggestions = [
           "스스로에게 '그럴 수 있어, 괜찮아' 소리내어 말해주기",
           "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
-          "따스한 햇살이 드는 자리에서 따끈한 보리차 한 모금 마시기"
+          "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
         ];
       }
-      // 2. ACT (Acceptance and Commitment Therapy) Protocol
-      // Target: Sadness, depression, helplessness, desire to escape/sleep
-      else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("무기력") || cleanInput.includes("귀찮") || cleanInput.includes("피곤") || cleanInput.includes("잠") || cleanInput.includes("아무것도")) {
-        warmResponse = "아무것도 하기 싫고 하루 종일 깊은 잠에 웅크려 이 아픔을 가만히 덮어두고 싶었구나. 밀려오는 슬픔이나 피로감은 일부러 떨쳐버릴 필요 없는, 그저 마음의 하늘에 일시적으로 불어오는 소나기 같은 자연스러운 감정의 날씨란다. 지금 머리를 맑게 해 줄 아주 신나고 네가 편하게 좋아하는 음악 한 곡만 재생해 보는 건 어때?";
+      // 2. ACT Protocol - sadness, depression [힘들고 우울한 마음] / [수면 및 휴식 욕구]
+      else if (cleanInput.includes("슬픔") || cleanInput.includes("우울")) {
+        warmResponse = "이야기 들어보니 마음의 '[힘들고 우울한 마음]' 부분에 에너지가 가득 방전돼서 많이 버거웠겠다. 지금 멘탈 많이 털렸을 텐데, 일단 오늘은 유튜브나 재미있는 쇼츠 가볍게 시청하면서 머리 식혀보는 건 어때?";
         riskLevel = "Medium Risk";
-        insight = "ACT 감정의 유연한 수용 및 일상 가치 전환 교정";
+        insight = "우울감 수용 일상 환기";
         heartTemp = 24;
         suggestions = [
           "내가 가장 좋아하는 가수의 최애 신나는 노래 한 곡 틀어보기",
@@ -150,17 +148,51 @@ export default function App() {
           "침대에서 몸을 가볍게 일으켜 크게 기지개 5초간 쭉 켜기"
         ];
       }
-      // 3. SFBT (Solution-Focused Brief Therapy) Protocol
-      // Target: Friend relationships, quiet personality, social communication difficulty
-      else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕따") || cleanInput.includes("소통")) {
-        warmResponse = "가장 소중하게 연결되고 싶은 인간관계에서 소외되거나 말 걸기가 몹시 낯설고 외로워 움츠러들었지? 그래도 아주 과거에 정말 가볍게라도 친구에게 먼저 기분 좋은 웃음이나 인사를 편하게 건네 성공했던 따뜻한 순간이 한 번이라도 기억나니? 네 안에 이미 빛나고 있는 상생 능력을 믿고 내가 함께 다정하게 동행할게.";
-        riskLevel = "Low Risk";
-        insight = "SFBT 예외적 성공 추적 및 사회성 자원 자가발굴";
+      else if (cleanInput.includes("무기력") || cleanInput.includes("귀찮") || cleanInput.includes("피곤") || cleanInput.includes("잠") || cleanInput.includes("아무것도")) {
+        warmResponse = "정말 마음의 '[수면 및 휴식 욕구]'가 가득 바닥을 맛봐서 아무것도 손에 절대 안 잡히는구나. 억지로 활력 내려고 너무 애쓰지 말고, 온몸을 그냥 편히 침대에 기대고 깊이 쉬는 건 어떨까?";
+        riskLevel = "Medium Risk";
+        insight = "휴식 욕구 공감 및 긴장이완";
         heartTemp = 32;
         suggestions = [
-          "거울 앞에 서서 내 입꼬리를 살짝 올려 부드럽고 가볍게 미소 지어보기",
-          "나에게 친절하게 웃어주었던 소중한 사람의 고마운 눈빛 추억해보기",
-          "소중한 스마트폰 메신저에 아주 긍정적인 다정한 상태 메시지 적어보기"
+          "눈 차분히 감고 10초간 시원한 침대에 몸 대어보기",
+          "따스하게 데운 우유나 물 한 모금 삼켜보기",
+          "내일의 할 일을 모두 잊는 하루 쉼표 주기"
+        ];
+      }
+      // 3. SFBT Protocol - quiet personality, friends [인간관계 스트레스]
+      else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통")) {
+        warmResponse = "친구 관계나 표현하는 게 마음 같지 않아서 '[인간관계 스트레스]'가 진짜 장난 아니었겠다. 그래도 혹시 아주 덤덤한 과거에라도 친구랑 먼저 인사했거나 대화 편하게 통했던 소중한 경험이 아주 작게나마 있었어?";
+        riskLevel = "Low Risk";
+        insight = "소통 극복 예외 경험 추적";
+        heartTemp = 30;
+        suggestions = [
+          "거울 앞에 서서 내 입꼬리를 살짝 올려 가볍게 미소 지어보기",
+          "나에게 가볍게 인사해 주었던 고마운 친구의 눈빛 떠올리기",
+          "메신저 상태 메세지에 긍정적인 말 한 구절 걸어두기"
+        ];
+      }
+      // 4. CBT Protocol - study, classes, grades [진로 및 학업 고민]
+      else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학")) {
+        warmResponse = "부모님 기대나 시험 점수 때문에 '[진로 및 학업 고민]' 영역이 은근히 목을 조여오듯 머리 복잡하고 신경 쓰였겠다. 그동안 눈치 보느라 수고 많았는데, 당분간은 무거운 생각을 책상 밑에 잠시 숨겨두는 게 어떨까?";
+        riskLevel = "Low Risk";
+        insight = "학업 압박 완화 지지";
+        heartTemp = 34;
+        suggestions = [
+          "당장 할 분량은 덮어두고 5분간 좋아하는 풍경 바라보기",
+          "좋아하는 간식거리 입에 쏙 물고 편안히 씹기",
+          "스스로 수고했다고 다정하게 볼을 어루만져주기"
+        ];
+      }
+      // 5. CBT Protocol - family disputes, arguments [가족 갈등]
+      else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("싸움") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형")) {
+        warmResponse = "가장 편히 쉬어야 할 집에서 털어놓지 못하고 사사건건 부딪치느라 '[가족 갈등]'이 가득 생겨나 답답했겠네. 서러웠을 네 마음을 어루만져주기 위해 지금 네 마음이 딱 시원하게 당기는 아이스크림이나 달달한 음료 한 잔 맛보는 거 어때?";
+        riskLevel = "Low Risk";
+        insight = "가족 불화 환기 지지";
+        heartTemp = 35;
+        suggestions = [
+          "시원하게 얼린 이온 음료나 달콤한 오렌지 주스 한 잔 들이켜기",
+          "이어폰 꽉 꽂고 가슴이 시원해지는 무선 리듬 사운드 듣기",
+          "내 아늑한 베개 폭신하게 껴안고 숨 고르기"
         ];
       }
     }
