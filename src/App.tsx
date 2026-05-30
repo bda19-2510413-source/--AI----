@@ -110,12 +110,25 @@ export default function App() {
   const [dbCategoryFilter, setDbCategoryFilter] = useState<string>("전체");
   const [dbRiskFilter, setDbRiskFilter] = useState<string>("전체");
 
+  const [isNeonActive, setIsNeonActive] = useState<boolean>(false);
+
   const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  const fetchDbStatus = async () => {
+    try {
+      const res = await fetch("/api/db/status");
+      const data = await res.json();
+      setIsNeonActive(!!data.neon);
+    } catch (err) {
+      console.error("Error fetching db status:", err);
+    }
+  };
 
   // Fetch baseline data
   useEffect(() => {
     fetchQueries();
     fetchCases();
+    fetchDbStatus();
   }, []);
 
   // Scroll to bottom of chat
@@ -570,11 +583,19 @@ export default function App() {
           {/* Status indicator */}
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8BA888]"></span>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isNeonActive ? 'bg-indigo-400' : 'bg-emerald-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isNeonActive ? 'bg-indigo-600' : 'bg-[#8BA888]'}`}></span>
             </span>
             <div className="text-xs text-[#7A746E]">
-              <span className="font-bold text-[#8BA888]">진행</span> | 실시간 라이브 감지
+              {isNeonActive ? (
+                <>
+                  <span className="font-bold text-indigo-600">Neon DB</span> 연동중
+                </>
+              ) : (
+                <>
+                  <span className="font-bold text-[#8BA888]">안심 로컬 DB</span> 작동중
+                </>
+              )}
             </div>
           </div>
         </div>

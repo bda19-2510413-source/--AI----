@@ -119,9 +119,16 @@ async function findMatchingCases(inputText: string, limit: number = 3) {
 
 // --- API ENDPOINTS ---
 
+// 0. Get database status
+app.get("/api/db/status", (req, res) => {
+  res.json({
+    neon: !!process.env.DATABASE_URL
+  });
+});
+
 // 1. Get the list of 6 standard inquiries
-app.get("/api/db/queries", (req, res) => {
-  const queries = getQueries();
+app.get("/api/db/queries", async (req, res) => {
+  const queries = await getQueries();
   res.json({ queries });
 });
 
@@ -350,7 +357,7 @@ app.post("/api/counsel/analyze", async (req, res) => {
 - 권장 공감적 위로 가이드: "${c.idealResponse}"`;
     }).join("\n\n");
 
-    const queries = getQueries();
+    const queries = await getQueries();
     const queryDetail = activeQueryId 
       ? (queries || []).find((q: any) => q.id === Number(activeQueryId)) 
       : null;

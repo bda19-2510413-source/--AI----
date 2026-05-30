@@ -1,12 +1,25 @@
 import fs from "fs";
 import path from "path";
+import { neon } from "@neondatabase/serverless";
 import { DEFAULT_CASES, ReferenceCase } from "./defaultCases";
 
 const DB_PATH = path.join(process.cwd(), "data", "db.json");
 
-// Always return false because Neon is not configured for local studio running
+// Check if Neon DB is configured via env
 export function isNeonConfigured(): boolean {
-  return false;
+  return !!process.env.DATABASE_URL;
+}
+
+// Lazy SQL Client initializer to prevent crashing on missing credentials at startup
+let sqlClient: any = null;
+function getSqlClient() {
+  if (!process.env.DATABASE_URL) {
+    return null;
+  }
+  if (!sqlClient) {
+    sqlClient = neon(process.env.DATABASE_URL);
+  }
+  return sqlClient;
 }
 
 // Global initialization flag
@@ -48,12 +61,77 @@ const DEFAULT_QUERIES = [
     "id": 6,
     "category": "마음 속 무거운 그늘 (Emotional Safety & Comfort)",
     "question": "최근 너무 지치고 지쳐서 세상의 스위치를 조용히 끄고 싶다거나, 차라리 깊게 잠들어 마음의 짐을 다 놓아버리고 싶은 충동이 밀려온 적이 있나요?",
-    "description": "가장 지치고 아픈 마음을 감지하여 안전망(마음 헬프라인 109)과 연계하고 안식을 구축합니다."
+    "description": "가장 지치고 아픈 마음을 감지하여 안전망(마음 헬프라인 1388)과 연계하고 안식을 구축합니다."
   }
 ];
 
-// Initialize database by creating db.json if it doesn't exist
+// Initialize database (creates tables & seeds default values in Neon OR initializes db.json local fallback)
 export async function initDatabase(): Promise<boolean> {
+  const sql = getSqlClient();
+  if (sql) {
+    console.info("[DB SERVICE] Initializing Neon PostgreSQL Database connection...");
+    try {
+      // 1. Create queries table
+      await sql`
+        CREATE TABLE IF NOT EXISTS queries (
+          id INT PRIMARY KEY,
+          category TEXT NOT NULL,
+          question TEXT NOT NULL,
+          description TEXT
+        )
+      `;
+
+      // 2. Create cases table
+      await sql`
+        CREATE TABLE IF NOT EXISTS cases (
+          id VARCHAR(255) PRIMARY KEY,
+          query_id INTEGER,
+          category TEXT NOT NULL,
+          student_response TEXT NOT NULL,
+          ideal_response TEXT NOT NULL,
+          risk_level VARCHAR(50) NOT NULL,
+          strategy TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+
+      // 3. Seed queries if empty
+      const existingQueries = await sql`SELECT count(*) as count FROM queries`;
+      const qCount = parseInt(existingQueries[0]?.count ?? "0", 10);
+      if (qCount === 0) {
+        console.info("[DB SERVICE] Seeding Neon PostgreSQL 'queries' table with baseline inquiries...");
+        for (const q of DEFAULT_QUERIES) {
+          await sql`
+            INSERT INTO queries (id, category, question, description)
+            VALUES (${q.id}, ${q.category}, ${q.question}, ${q.description})
+            ON CONFLICT (id) DO NOTHING
+          `;
+        }
+      }
+
+      // 4. Seed cases if empty
+      const existingCases = await sql`SELECT count(*) as count FROM cases`;
+      const cCount = parseInt(existingCases[0]?.count ?? "0", 10);
+      if (cCount === 0) {
+        console.info("[DB SERVICE] Seeding Neon PostgreSQL 'cases' table with master references...");
+        for (const c of DEFAULT_CASES) {
+          await sql`
+            INSERT INTO cases (id, query_id, category, student_response, ideal_response, risk_level, strategy)
+            VALUES (${c.id}, ${c.queryId}, ${c.category}, ${c.studentResponse}, ${c.idealResponse}, ${c.riskLevel}, ${c.strategy})
+            ON CONFLICT (id) DO NOTHING
+          `;
+        }
+      }
+
+      console.info("[DB SERVICE] Neon PostgreSQL initialized and seeded successfully.");
+      isInitialized = true;
+      return true;
+    } catch (err) {
+      console.error("[DB SERVICE] Neon DB initialization crashed, falling back to local JSON file:", err);
+    }
+  }
+
+  // Local JSON fallback logic:
   if (isInitialized) return true;
 
   try {
@@ -80,7 +158,7 @@ export async function initDatabase(): Promise<boolean> {
   }
 }
 
-// Read database helper
+// Read database fallback helper
 function readLocalDB() {
   try {
     if (!fs.existsSync(DB_PATH)) {
@@ -117,7 +195,7 @@ function readLocalDB() {
   }
 }
 
-// Write database helper
+// Write database fallback helper
 function writeLocalDB(data: { queries: any[]; cases: ReferenceCase[] }): boolean {
   try {
     const parentDir = path.dirname(DB_PATH);
@@ -132,8 +210,25 @@ function writeLocalDB(data: { queries: any[]; cases: ReferenceCase[] }): boolean
   }
 }
 
-// 1. Get Queries
-export function getQueries() {
+// 1. Get Queries (Async to match Neon)
+export async function getQueries(): Promise<any[]> {
+  await initDatabase();
+  const sql = getSqlClient();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT id, category, question, description
+        FROM queries
+        ORDER BY id ASC
+      `;
+      if (rows && rows.length > 0) {
+        return rows;
+      }
+    } catch (err) {
+      console.warn("[DB SERVICE] Neon Queries read failed, falling back to local file...", err);
+    }
+  }
+
   const local = readLocalDB();
   return local.queries;
 }
@@ -141,6 +236,27 @@ export function getQueries() {
 // 2. Fetch Cases
 export async function getCases(): Promise<ReferenceCase[]> {
   await initDatabase();
+  const sql = getSqlClient();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT 
+          id, 
+          query_id as "queryId", 
+          category, 
+          student_response as "studentResponse", 
+          ideal_response as "idealResponse", 
+          risk_level as "riskLevel", 
+          strategy
+        FROM cases
+        ORDER BY created_at DESC, id DESC
+      `;
+      return rows as ReferenceCase[];
+    } catch (err) {
+      console.warn("[DB SERVICE] Neon Cases read failed, falling back to local file...", err);
+    }
+  }
+
   const local = readLocalDB();
   return local.cases;
 }
@@ -148,51 +264,80 @@ export async function getCases(): Promise<ReferenceCase[]> {
 // 3. Insert a single Case
 export async function addCase(newCase: ReferenceCase): Promise<boolean> {
   await initDatabase();
-  const local = readLocalDB();
-  
-  // Unshift so newer custom entries appear first
-  local.cases.unshift(newCase);
-  const success = writeLocalDB(local);
-  if (success) {
-    console.info(`[DB SERVICE] Added 1 custom case: ${newCase.id}`);
+  const sql = getSqlClient();
+  if (sql) {
+    try {
+      await sql`
+        INSERT INTO cases (id, query_id, category, student_response, ideal_response, risk_level, strategy)
+        VALUES (${newCase.id}, ${newCase.queryId}, ${newCase.category}, ${newCase.studentResponse}, ${newCase.idealResponse}, ${newCase.riskLevel}, ${newCase.strategy})
+      `;
+      console.info(`[DB SERVICE] Added 1 custom case to Neon: ${newCase.id}`);
+      return true;
+    } catch (err) {
+      console.error("[DB SERVICE] Neon insert failed, writing to local file fallback...", err);
+    }
   }
-  return success;
+
+  const local = readLocalDB();
+  local.cases.unshift(newCase);
+  return writeLocalDB(local);
 }
 
 // 4. Delete a Case
 export async function deleteCase(id: string): Promise<boolean> {
   await initDatabase();
+  const sql = getSqlClient();
+  if (sql) {
+    try {
+      const result = await sql`
+        DELETE FROM cases WHERE id = ${id} RETURNING id
+      `;
+      console.info(`[DB SERVICE] Deleted custom case from Neon: ${id}`);
+      return result.length > 0;
+    } catch (err) {
+      console.error("[DB SERVICE] Neon delete failed, removing from local file fallback...", err);
+    }
+  }
+
   const local = readLocalDB();
   const initialLength = local.cases.length;
-  
   local.cases = local.cases.filter((c) => c.id !== id);
   if (local.cases.length === initialLength) {
-    console.warn(`[DB SERVICE] Case ID ${id} not found to delete.`);
     return false;
   }
-  
-  const success = writeLocalDB(local);
-  if (success) {
-    console.info(`[DB SERVICE] Deleted case: ${id}`);
-  }
-  return success;
+  return writeLocalDB(local);
 }
 
 // 5. Bulk insert Cases
 export async function addCasesBulk(newCases: ReferenceCase[]): Promise<number> {
   await initDatabase();
+  const sql = getSqlClient();
+  if (sql) {
+    try {
+      let insertedCount = 0;
+      for (const c of newCases) {
+        const result = await sql`
+          INSERT INTO cases (id, query_id, category, student_response, ideal_response, risk_level, strategy)
+          VALUES (${c.id}, ${c.queryId}, ${c.category}, ${c.studentResponse}, ${c.idealResponse}, ${c.riskLevel}, ${c.strategy})
+          ON CONFLICT (id) DO NOTHING
+          RETURNING id
+        `;
+        if (result.length > 0) {
+          insertedCount++;
+        }
+      }
+      console.info(`[DB SERVICE] Neon bulk insert added ${insertedCount} unique cases.`);
+      return insertedCount;
+    } catch (err) {
+      console.error("[DB SERVICE] Neon bulk insert failed, falling back to local file...", err);
+    }
+  }
+
   const local = readLocalDB();
-  
-  // Deduping bulk uploads with existing custom ones
   const existingIds = new Set(local.cases.map(c => c.id));
   const uniqueNewCases = newCases.filter(c => !existingIds.has(c.id));
   
   local.cases = [...uniqueNewCases, ...local.cases];
   const success = writeLocalDB(local);
-  
-  if (success) {
-    console.info(`[DB SERVICE] Successfully bulk uploaded ${uniqueNewCases.length} new cases.`);
-    return uniqueNewCases.length;
-  }
-  return 0;
+  return success ? uniqueNewCases.length : 0;
 }
