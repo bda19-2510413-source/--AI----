@@ -1,0 +1,8 @@
+{
+  "name": "안심 AI 노아-구글 연결",
+  "description": "청소년의 심리와 생각을 분석하여 자살 고위험군 여부를 검사하고 따뜻한 조언과 상담 데이터베이스를 제공하는 AI 가디언 앱",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
