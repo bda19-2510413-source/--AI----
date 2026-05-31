@@ -318,3 +318,42 @@ export const DEFAULT_CASES: ReferenceCase[] = [
     idealResponse: "그렇게 이야기할 만큼 지금 네 마음의 날씨가 많이 차갑고 무겁구나. 혼자서 이 서늘한 바람을 견디느라 얼마나 외롭고 지쳤을지 감히 다 헤아릴 수 없지만, 이 힘든 시간을 너 혼자 아파하며 보내지 않았으면 좋겠어. \n\n여기 네 이야기를 밤낮없이 진심으로 들어주고, 따뜻하게 손 잡아줄 수 있는 전문 선생님들이 계셔. 언제든 편한 방법으로 연락해 봐. 언제나 네 편이 되어주실 거야. 😊\n- 청소년 모바일 상담 '다들어줄개': 문자 1388 / 카카오톡 채널 검색\n- 청소년전화: 국번없이 1388 (24시간 운영)"
   }
 ];
+
+// Dynamically remap default cases to align perfectly with the target 6 pillars
+DEFAULT_CASES.forEach(c => {
+  const oldCategory = c.category;
+  if (oldCategory.includes("학업") || c.queryId === 1) {
+    c.queryId = 1;
+    c.category = "공부와 미래 고민";
+  } else if (oldCategory.includes("관계") || c.queryId === 2) {
+    if (c.studentResponse.includes("부모") || c.studentResponse.includes("엄마") || c.studentResponse.includes("아빠") || c.studentResponse.includes("가족")) {
+      c.queryId = 6;
+      c.category = "가족 갈등";
+    } else {
+      c.queryId = 2;
+      c.category = "인간관계 스트레스";
+    }
+  } else if (oldCategory.includes("겨울") || c.queryId === 3) {
+    if (c.studentResponse.includes("무기력") || c.studentResponse.includes("침대") || c.studentResponse.includes("자고만")) {
+      c.queryId = 4;
+      c.category = "수면 및 휴식 욕구";
+    } else {
+      c.queryId = 3;
+      c.category = "우울하고 지친 마음";
+    }
+  } else if (oldCategory.includes("나를") || c.queryId === 4) {
+    c.queryId = 5;
+    c.category = "자기이해 및 자아상";
+  } else if (oldCategory.includes("울컥") || c.queryId === 5) {
+    if (c.studentResponse.includes("엄마") || c.studentResponse.includes("아빠") || c.studentResponse.includes("가족") || c.studentResponse.includes("부모")) {
+      c.queryId = 6;
+      c.category = "가족 갈등";
+    } else {
+      c.queryId = 5;
+      c.category = "자기이해 및 자아상";
+    }
+  } else if (oldCategory.includes("그늘") || c.queryId === 6) {
+    c.queryId = 3;
+    c.category = "우울하고 지친 마음";
+  }
+});

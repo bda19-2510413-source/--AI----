@@ -61,7 +61,7 @@ export default function App() {
         analysis: {
           riskLevel: "Critical",
           insight: "위기 반응 감지",
-          warmResponse: `마음이 너무 무겁고 '[힘들고 우울한 마음]'이 깊어져 진짜 다 놓아버리고 싶을 만큼 막막했구나. 혼자서 너무 지치지 말고, 힘들 땐 24시간 열려 있는 청소년전화 1388이나 모바일 상담 '다들어줄개'(문자 1388)로 꼭 연락해서 편안하게 네 속마음을 들려주면 좋겠어.`,
+          warmResponse: `마음이 너무 무겁고 힘들어서 진짜 다 놓아버리고 싶을 만큼 막막했구나. 혼자서 너무 지치지 말고, 힘들 땐 24시간 열려 있는 청소년전화 1388이나 모바일 상담 '다들어줄개'(문자 1388)로 꼭 연락해서 편안하게 네 속마음을 들려주면 좋겠어.\n[힘들고 우울한 마음]`,
           triggerAlert: true,
           heartTemperature: 10,
           suggestions: [
@@ -74,7 +74,47 @@ export default function App() {
       };
     }
 
-    // 2. Keyword check for generic matching if no high-score case is found
+    // 1.5. Casual Greeting Interceptor (일상 인사 가로채기 연동)
+    const isCasualGreeting = (text: string): boolean => {
+      const clean = text.trim().replace(/[?!\.\s]/g, "");
+      const greetingKeywords = [
+        "안녕", "안녕하세요", "반가워", "반갑다", "반갑네", "반가워요", "나도반가워", "하이", "하이요", "hi", "hello", "안뇽", "안농", "방가", "노아야", "노아안녕", "안녕노아"
+      ];
+      const worryKeywords = [
+        "힘들", "슬퍼", "우울", "자책", "자살", "자해", "죽고", "짜증", "공부", "성적", "시험", "엄마", "아빠"
+      ];
+      const hasWorry = worryKeywords.some(w => clean.includes(w));
+      if (hasWorry) return false;
+      return greetingKeywords.some(g => clean === g || clean.startsWith(g)) && clean.length <= 12;
+    };
+
+    if (isCasualGreeting(inputText)) {
+      const greetingResponses = [
+        "어 안녕! 진짜 반가워. 오늘 하루 어떻게 보냈어? 형한테 무슨 일이든 편안하게 들려줘.",
+        "오 왔구나! 반가워. 오늘 밤에 무슨 재미있는 수다 떨까? 마음 편하게 얘기해 줘.",
+        "안녕안녕! 오늘 하루는 별일 없었어? 무슨 일 있었는지 형한테 다 얘기해 봐. 다 들어줄게.",
+        "안녕! 어서 와. 오늘 네 마음의 날씨는 어때? 맑음이야, 아니면 조금 흐림이야?"
+      ];
+      const idx = Math.abs(inputText.length) % greetingResponses.length;
+      return {
+        success: true,
+        analysis: {
+          riskLevel: "Safe",
+          insight: "일상 친근 인사 소통",
+          warmResponse: `${greetingResponses[idx]}\n[자기이해 및 자아상]`,
+          triggerAlert: false,
+          heartTemperature: 36.5,
+          suggestions: [
+            "편안히 기지개 한 번 켜보기",
+            "시원한 물 한 모금 마시기",
+            "가만히 눈 감고 5초간 가벼운 쉼 누리기"
+          ]
+        },
+        matchedReferenceCases: []
+      };
+    }
+
+    // 2. Keyword check for database matching
     const cleanAndTokenize = (text: string) => {
       if (!text) return [];
       return text.toLowerCase()
@@ -84,117 +124,99 @@ export default function App() {
     };
 
     const tokens = cleanAndTokenize(inputText);
-    
+
     // Find matching reference cases using score matching
     const scored = allCases.map(c => {
       let score = 0;
-      const responseLower = (c.studentResponse || "").toLowerCase();
-      const idealLower = (c.idealResponse || "").toLowerCase();
-      const categoryLower = (c.category || "").toLowerCase();
-
+      const caseTokens = cleanAndTokenize(c.studentResponse);
       tokens.forEach(t => {
-        if (responseLower.includes(t)) score += 5;
-        if (idealLower.includes(t)) score += 2;
-        if (categoryLower.includes(t)) score += 1;
+        if (caseTokens.includes(t)) {
+          score += 1;
+        }
       });
-
       return { ...c, score };
     });
-
     const sorted = [...scored].sort((a, b) => b.score - a.score);
-    const bestMatch = sorted[0];
-    const topScoredMatched = sorted.filter(c => c.score > 2).slice(0, 3);
+    const topScoredMatched = sorted.slice(0, 3);
 
-    // Warm responses depending on keywords
-    let warmResponse = "얘기 들어보니까 '[자기이해 및 자아상]' 영역이 한 단계 피곤해져서 마음에 지침이 스며든 것 같아. 지금 너를 가장 편안하게 해주는 취미나 쇼츠를 보며 머리를 가볍게 식혀보면 어떨까?";
-    let riskLevel = "Safe";
-    let insight = "일상 고민 경청 및 위로";
+    // Default warm responses depending on keywords
+    let warmResponse = "오늘 하루는 어떻게 보냈어? 무슨 재미있는 일이나 고민거리가 있었는지 형한테 편하게 얘기해 줘. 다 들어줄게!\n[자기이해 및 자아상]";
+    let riskLevel = "Low Risk";
+    let insight = "일반 마음 공감지평";
     let heartTemp = 36.5;
+    let suggestions = ["편안히 심호흡 3번 하기", "눈을 감고 10초간 쉬어 보기", "따뜻한 물 한 잔 마시며 기지개 켜기"];
 
-    // Set suggestions
-    let suggestions = [
-      "창문을 열고 산뜻한 바깥 공기 5초 마시기",
-      "복잡한 하루 생각을 노트나 메모장에 쏟아내기",
-      "오늘도 고생한 스스로에게 '많이 고생했어' 토닥여 주기"
-    ];
-
-    if (bestMatch && bestMatch.score > 4) {
-      warmResponse = bestMatch.idealResponse;
-      riskLevel = bestMatch.riskLevel || "Medium Risk";
-      insight = bestMatch.strategy || "맞춤 감정 수치 지지";
-      heartTemp = (riskLevel === "Safe" || riskLevel === "Low Risk") ? 38 : 20;
-    } else {
-      // 1. CBT Protocol - self-criticism, low self-esteem [자기이해 및 자아상]
-      if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감")) {
-        warmResponse = "자기를 너무 미워하게 돼서 진짜 속상하고 많이 답답했겠다, 지금 딱 '[자기이해 및 자아상]' 쪽에 고민이 깊어진 거 같아. 대체 왜 그렇게 생각하게 됐는지 무슨 일 있었는지 나한테만 살짝 말해줄래?";
-        riskLevel = "Low Risk";
-        insight = "자아상 지지 성찰 유도";
-        heartTemp = 28;
-        suggestions = [
-          "스스로에게 '그럴 수 있어, 괜찮아' 소리내어 말해주기",
-          "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
-          "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
-        ];
-      }
-      // 2. ACT Protocol - sadness, depression [우울하고 지친 마음] / [수면 및 휴식 욕구]
-      else if (cleanInput.includes("슬픔") || cleanInput.includes("우울")) {
-        warmResponse = "이야기 들으니까 요즘 마음이 '[우울하고 지친 마음]' 쪽에 좀 머물러 있는 거 같아 걱정되고 속상하네. 지금 멘탈 많이 지쳤을 텐데, 억지로 이겨내려 애쓰지 말고 일단 오늘은 편안히 유튜브나 쇼츠 보며 머리 식혀볼래?";
-        riskLevel = "Medium Risk";
-        insight = "우울감 수용 일상 환기";
-        heartTemp = 24;
-        suggestions = [
-          "내가 가장 좋아하는 가수의 최애 신나는 노래 한 곡 틀어보기",
-          "휴대폰으로 좋아하는 아이돌이나 귀여운 동물 30초 숏폼 시청하기",
-          "침대에서 몸을 가볍게 일으켜 크게 기지개 5초간 쭉 켜기"
-        ];
-      }
-      else if (cleanInput.includes("무기력") || cleanInput.includes("귀찮") || cleanInput.includes("피곤") || cleanInput.includes("잠") || cleanInput.includes("아무것도")) {
-        warmResponse = "정말 마음의 '[수면 및 휴식 욕구]'가 가득 바닥을 맛봐서 아무것도 손에 절대 안 잡히는구나. 억지로 활력 내려고 너무 애쓰지 말고, 온몸을 그냥 편히 침대에 기대고 깊이 쉬는 건 어떨까?";
-        riskLevel = "Medium Risk";
-        insight = "휴식 욕구 공감 및 긴장이완";
-        heartTemp = 32;
-        suggestions = [
-          "눈 차분히 감고 10초간 시원한 침대에 몸 대어보기",
-          "따스하게 데운 우유나 물 한 모금 삼켜보기",
-          "내일의 할 일을 모두 잊는 하루 쉼표 주기"
-        ];
-      }
-      // 3. SFBT Protocol - quiet personality, friends [인간관계 스트레스]
-      else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통")) {
-        warmResponse = "친구 관계나 표현하는 게 마음 같지 않아서 '[인간관계 스트레스]'가 진짜 장난 아니었겠다. 그래도 혹시 아주 덤덤한 과거에라도 친구랑 먼저 인사했거나 대화 편하게 통했던 소중한 경험이 아주 작게나마 있었어?";
-        riskLevel = "Low Risk";
-        insight = "소통 극복 예외 경험 추적";
-        heartTemp = 30;
-        suggestions = [
-          "거울 앞에 서서 내 입꼬리를 살짝 올려 가볍게 미소 지어보기",
-          "나에게 가볍게 인사해 주었던 고마운 친구의 눈빛 떠올리기",
-          "메신저 상태 메세지에 긍정적인 말 한 구절 걸어두기"
-        ];
-      }
-      // 4. CBT Protocol - study, classes, grades [공부와 미래 고민]
-      else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학")) {
-        warmResponse = "성적이나 진로 생각 때문에 머리도 아프고 '[공부와 미래 고민]' 때문에 마음이 진짜 많이 무거웠겠다. 그동안 혼자 애쓰고 고민하느라 고생 많았는데, 당분간은 무거운 생각들 좀 접어두고 푹 쉬면 좋겠어.";
-        riskLevel = "Low Risk";
-        insight = "학업 압박 완화 지지";
-        heartTemp = 34;
-        suggestions = [
-          "당장 할 분량은 덮어두고 5분간 좋아하는 풍경 바라보기",
-          "좋아하는 간식거리 입에 쏙 물고 편안히 씹기",
-          "스스로 수고했다고 다정하게 볼을 어루만져주기"
-        ];
-      }
-      // 5. CBT Protocol - family disputes, arguments [가족 갈등]
-      else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("싸움") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형")) {
-        warmResponse = "가장 편히 쉬어야 할 집에서 털어놓지 못하고 사사건건 부딪치느라 '[가족 갈등]'이 가득 생겨나 답답했겠네. 서러웠을 네 마음을 어루만져주기 위해 지금 네 마음이 딱 시원하게 당기는 아이스크림이나 달달한 음료 한 잔 맛보는 거 어때?";
-        riskLevel = "Low Risk";
-        insight = "가족 불화 환기 지지";
-        heartTemp = 35;
-        suggestions = [
-          "시원하게 얼린 이온 음료나 달콤한 오렌지 주스 한 잔 들이켜기",
-          "이어폰 꽉 꽂고 가슴이 시원해지는 무선 리듬 사운드 듣기",
-          "내 아늑한 베개 폭신하게 껴안고 숨 고르기"
-        ];
-      }
+    // 1. [자기이해 및 자아상]
+    if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감") || cleanInput.includes("내가싫") || cleanInput.includes("자아")) {
+      warmResponse = "자기를 너무 미워하지 않았으면 좋겠어. 누구나 실수하고 서툴 수 있으니까 모두 네 잘못이 절대 아냐. 지금은 너무 무겁게 생각하지 말고 따뜻하게 비춰보자. 너는 그 자체로 충분해.\n[자기이해 및 자아상]";
+      riskLevel = "Low Risk";
+      insight = "자아상 지지 성찰 유도";
+      heartTemp = 28;
+      suggestions = [
+        "스스로에게 '그럴 수 있어, 괜찮아' 소리내어 말해주기",
+        "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
+        "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
+      ];
+    }
+    // 2. [인간관계 스트레스]
+    else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통") || cleanInput.includes("외로움") || cleanInput.includes("관계")) {
+      warmResponse = "친구 일로 스트레스 많이 받고 대화에서 은근 소외감 들었나 보네. 마음고생이 심해 밤잠 설칠 만큼 복잡하겠어. 꼬여버린 관계라도 너무 상처받지 말고, 너를 진심으로 좋아해 주는 사람들의 목소리에 먼저 귀 기울여보자.\n[인간관계 스트레스]";
+      riskLevel = "Low Risk";
+      insight = "소통 극복 지지";
+      heartTemp = 30;
+      suggestions = [
+        "거울 앞에 서서 내 입꼬리를 살짝 올려 가볍게 미소 지어보기",
+        "나에게 가볍게 인사해 주었던 고마운 친구의 눈빛 떠올리기",
+        "메신저 상태 메세지에 너무 흔들리지 않기"
+      ];
+    }
+    // 3. [힘들고 우울한 마음]
+    else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("힘들") || cleanInput.includes("눈물") || cleanInput.includes("속상")) {
+      warmResponse = "이야기 들으니까 요즘 마음이 많이 가라앉고 지쳐 보여서 내 가슴도 쓰려. 혼자 끙끙 앓느라 얼마나 아팠을까. 힘든 마음 억지로 이겨내려 애쓰지 말고, 힘든 날엔 그냥 마음 편히 쉬어 가도 괜찮아.\n[힘들고 우울한 마음]";
+      riskLevel = "Low Risk";
+      insight = "정서적 공감 및 지지";
+      heartTemp = 25;
+      suggestions = [
+        "좋아하는 포근한 이불 덮고 가만히 누워있기",
+        "아무 생각 없이 따뜻한 차 한 잔 우려 마시기",
+        "네 속마음을 일기장에 편안하게 끄적여보기"
+      ];
+    }
+    // 4. [수면 및 휴식 욕구]
+    else if (cleanInput.includes("수면") || cleanInput.includes("잠") || cleanInput.includes("불면") || cleanInput.includes("휴식") || cleanInput.includes("피곤") || cleanInput.includes("졸려") || cleanInput.includes("지쳐") || cleanInput.includes("쉬고싶") || cleanInput.includes("무기력") || cleanInput.includes("침대")) {
+      warmResponse = "요즘 잠도 제대로 못 자고 몸이랑 마음이 엄청 피곤하고 지쳐 있구나. 누워 있어도 피로가 안 풀리는 기분이지? 지금은 다른 것보다 네 몸과 마음에 온전한 휴식을 선물하는 게 제일 중요해.\n[수면 및 휴식 욕구]";
+      riskLevel = "Low Risk";
+      insight = "수면 위생 및 휴식 권고";
+      heartTemp = 24;
+      suggestions = [
+        "따뜻한 물로 가볍게 샤워하고 침대에 누워보기",
+        "잠들기 30분 전에는 스마트폰 멀리 치워두기",
+        "토닥토닥 내 목덜미를 가볍게 마사지해 주기"
+      ];
+    }
+    // 5. [진로 및 학업 고민]
+    else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학") || cleanInput.includes("학교") || cleanInput.includes("학업")) {
+      warmResponse = "성적이나 미래 생각 때문에 불안하고 공부하느라 진짜 많이 지치고 어깨가 무거운 상태구나. 그동안 혼자 애쓰느라 가슴앓이 많았을 텐데, 공부 때문에 너무 스트레스받지 말고 가끔은 숨 돌릴 틈도 만들어 줘.\n[진로 및 학업 고민]";
+      riskLevel = "Low Risk";
+      insight = "학업 부담 완화";
+      heartTemp = 34;
+      suggestions = [
+        "당장 할 분량은 기지개 켜고 5분간 좋아하는 풍경 바라보기",
+        "좋아하는 달콤한 간식거리 한 입 쏙 물고 씹기",
+        "오늘 하루도 충분히 애썼다고 다정하게 스스로 칭찬하기"
+      ];
+    }
+    // 6. [가족 갈등]
+    else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("싸움") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형") || cleanInput.includes("누나") || cleanInput.includes("오빠")) {
+      warmResponse = "가장 편히 쉬어야 할 집에서 털어놓지 못하고 사사건건 잔소리에 부딪쳐 답답했겠다. 서러웠을 네 마음을 달래주고 싶네. 부드러운 바람 쐬면서 달콤한 아이스크림 하나 먹고 기분 전환해보는 거 어때?\n[가족 갈등]";
+      riskLevel = "Low Risk";
+      insight = "가족 불화 환기 지지";
+      heartTemp = 35;
+      suggestions = [
+        "시원하고 달콤한 오렌지 주스나 아이스크림 먹기",
+        "이어폰 꽂고 마음이 가벼워지는 잔잔한 음악 듣기",
+        "내 아늑한 베개 껴안고 깊이 숨 고르기"
+      ];
     }
 
     return {

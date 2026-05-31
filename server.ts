@@ -344,6 +344,49 @@ app.post("/api/counsel/analyze", async (req, res) => {
     });
   }
 
+  // 1.5. Casual Greeting Interceptor (일상 인사 가로채기 시스템 연동)
+  const isCasualGreeting = (text: string): boolean => {
+    const clean = text.trim().replace(/[?!\.\s]/g, "");
+    const greetingKeywords = [
+      "안녕", "안녕하세요", "반가워", "반갑다", "반갑네", "반가워요", "나도반가워", "하이", "하이요", "hi", "hello", "안뇽", "안농", "방가", "노아야", "노아안녕", "안녕노아"
+    ];
+    const worryKeywords = [
+      "힘들", "슬퍼", "우울", "자책", "자살", "자해", "죽고", "짜증", "공부", "성적", "시험", "엄마", "아빠"
+    ];
+    const hasWorry = worryKeywords.some(w => clean.includes(w));
+    if (hasWorry) return false;
+    return greetingKeywords.some(g => clean === g || clean.startsWith(g)) && clean.length <= 12;
+  };
+
+  if (isCasualGreeting(currentInput)) {
+    const greetingResponses = [
+      "어 안녕! 진짜 반가워. 오늘 하루 어떻게 보냈어? 형한테 무슨 일이든 편안하게 들려줘.",
+      "오 왔구나! 반가워. 오늘 밤에 무슨 재미있는 수다 떨까? 마음 편하게 얘기해 줘.",
+      "안녕안녕! 오늘 하루는 별일 없었어? 무슨 일 있었는지 형한테 다 얘기해 봐. 다 들어줄게.",
+      "안녕! 어서 와. 오늘 네 마음의 날씨는 어때? 맑음이야, 아니면 조금 흐림이야?"
+    ];
+    // Simple stateful calculation to preserve non-repetitive response across messages
+    const idx = Math.abs(currentInput.length + (chatHistory?.length || 0)) % greetingResponses.length;
+    const selectedResponse = greetingResponses[idx];
+
+    return res.json({
+      success: true,
+      analysis: {
+        riskLevel: "Safe",
+        insight: "일상 친근 인사 소통",
+        warmResponse: `${selectedResponse}\n[자기이해 및 자아상]`,
+        triggerAlert: false,
+        heartTemperature: 36.5,
+        suggestions: [
+          "편안히 기지개 한 번 켜보기",
+          "시원한 물 한 모금 마시기",
+          "가만히 눈 감고 5초간 가벼운 쉼 누리기"
+        ]
+      },
+      matchedReferenceCases: []
+    });
+  }
+
   try {
     const ai = getGeminiClient();
 

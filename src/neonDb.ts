@@ -95,18 +95,15 @@ export async function initDatabase(): Promise<boolean> {
         )
       `;
 
-      // 3. Seed queries if empty
-      const existingQueries = await sql`SELECT count(*) as count FROM queries`;
-      const qCount = parseInt(existingQueries[0]?.count ?? "0", 10);
-      if (qCount === 0) {
-        console.info("[DB SERVICE] Seeding Neon PostgreSQL 'queries' table with baseline inquiries...");
-        for (const q of DEFAULT_QUERIES) {
-          await sql`
-            INSERT INTO queries (id, category, question, description)
-            VALUES (${q.id}, ${q.category}, ${q.question}, ${q.description})
-            ON CONFLICT (id) DO NOTHING
-          `;
-        }
+      // 3. Seed and Sync queries (Always upsert to replace old "임상진단 부문" metadata in Neon)
+      console.info("[DB SERVICE] Seeding and Syncing Neon 'queries' table with target 6 pillars...");
+      for (const q of DEFAULT_QUERIES) {
+        await sql`
+          INSERT INTO queries (id, category, question, description)
+          VALUES (${q.id}, ${q.category}, ${q.question}, ${q.description})
+          ON CONFLICT (id) DO UPDATE
+          SET category = EXCLUDED.category, question = EXCLUDED.question, description = EXCLUDED.description
+        `;
       }
 
       // 4. Seed cases if empty
@@ -122,6 +119,15 @@ export async function initDatabase(): Promise<boolean> {
           `;
         }
       }
+
+      // 4.5 Sync existing database cases categories dynamically with the 6 friendly ones
+      console.info("[DB SERVICE] Syncing existing Neon 'cases' categories to 6 friendly terms...");
+      await sql`UPDATE cases SET category = '공부와 미래 고민' WHERE query_id = 1`;
+      await sql`UPDATE cases SET category = '인간관계 스트레스' WHERE query_id = 2`;
+      await sql`UPDATE cases SET category = '우울하고 지친 마음' WHERE query_id = 3`;
+      await sql`UPDATE cases SET category = '수면 및 휴식 욕구' WHERE query_id = 4`;
+      await sql`UPDATE cases SET category = '자기이해 및 자아상' WHERE query_id = 5`;
+      await sql`UPDATE cases SET category = '가족 갈등' WHERE query_id = 6`;
 
       console.info("[DB SERVICE] Neon PostgreSQL initialized and seeded successfully.");
       isInitialized = true;
