@@ -31,6 +31,12 @@ import {
 import { EvaluationQuery, CounselingCase, Message } from './types';
 import { DEFAULT_CASES } from './defaultCases';
 
+const cleanCommentText = (text: string): string => {
+  if (!text) return "";
+  // Strip any category bracket names completely from display text
+  return text.replace(/\[\s*(자기이해 및 자아상|인간관계 스트레스|힘들고 우울한 마음|우울하고 지친 마음|수면 및 휴식 욕구|진로 및 학업 고민|공부와 미래 고민|가족 갈등)\s*\]/g, "").trim();
+};
+
 export default function App() {
   // App States
   const [queries, setQueries] = useState<EvaluationQuery[]>([]);
@@ -1236,7 +1242,7 @@ export default function App() {
                           <Heart className="w-3 h-3 fill-current text-[#8BA888]" /> 안심 AI 노아의 따뜻한 위로 조언
                         </div>
                         <p className="text-xs md:text-[13px] text-[#4A443F] leading-relaxed whitespace-pre-line font-medium italic">
-                          "{pillarAnalysis[selectedQueryId].warmResponse}"
+                          "{cleanCommentText(pillarAnalysis[selectedQueryId].warmResponse)}"
                         </p>
                       </div>
 
@@ -1370,7 +1376,7 @@ export default function App() {
                               </div>
                               
                               <p className="text-[10px] text-[#7A746E] line-clamp-1 italic leading-relaxed">
-                                {analysis ? `"${analysis.warmResponse}"` : answer ? `"${answer}"` : "답변이 기입되지 않았습니다."}
+                                {analysis ? `"${cleanCommentText(analysis.warmResponse)}"` : answer ? `"${answer}"` : "답변이 기입되지 않았습니다."}
                               </p>
                             </div>
                           );
@@ -1422,7 +1428,7 @@ export default function App() {
                         ? 'bg-[#8BA888] text-white rounded-tr-none shadow-sm'
                         : 'bg-[#FAF9F6] border border-[#E5E2D9] text-[#4A443F] rounded-tl-none'
                     }`}>
-                      <p className="whitespace-pre-line">{msg.text}</p>
+                      <p className="whitespace-pre-line">{cleanCommentText(msg.text)}</p>
                       
                       {/* Attached insight for AI replies */}
                       {msg.insight && (
