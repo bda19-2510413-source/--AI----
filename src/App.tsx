@@ -94,7 +94,8 @@ export default function App() {
       return greetingKeywords.some(g => clean === g || clean.startsWith(g)) && clean.length <= 12;
     };
 
-    if (isCasualGreeting(inputText)) {
+    const isChatWithHistory = !activeQueryId && freeChatHistory.length > 1;
+    if (!isChatWithHistory && isCasualGreeting(inputText)) {
       const greetingResponses = [
         "어 안녕! 진짜 반가워. 오늘 하루 어떻게 보냈어? 형한테 무슨 일이든 편안하게 들려줘.",
         "오 왔구나! 반가워. 오늘 밤에 무슨 재미있는 수다 떨까? 마음 편하게 얘기해 줘.",
