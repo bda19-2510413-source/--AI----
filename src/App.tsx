@@ -53,27 +53,39 @@ export default function App() {
 
   const allCases = [...localCustomCases, ...cases];
 
-  // Premium highly-empathetic client-side counselor fallback
-  const simulateCounselingClientSide = (inputText: string, activeQueryId?: number | null) => {
-    // 1. Crisis Interceptor
-    const cleanInput = (inputText || "").toLowerCase().replace(/\s+/g, "");
-    const hasCrisisKeyword = [
-      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "살기싫다", "사라지고싶다", "포기하고싶다"
-    ].some(kw => cleanInput.includes(kw));
+  const getSeverity = (text: string): "High" | "Medium" | "Low" => {
+    const clean = text.toLowerCase().replace(/\s+/g, "");
+    // High: 자해, 자살, 죽고싶다, 가출, 폭력, 학교폭력, 학대, 뺨, 벽에, 피비, 칼, 자해 등
+    const highKeywords = ["자해", "자살", "죽고싶", "죽고하", "죽어야지", "죽고파", "죽을래", "학대", "폭력", "가출", "살기싫", "사라지고싶", "포기하고싶", "그만할래", "칼로", "피비", "몸을해", "뺨을", "머리를들이받", "벽에", "폭행"];
+    if (highKeywords.some(kw => clean.includes(kw))) {
+      return "High";
+    }
+    // Medium: 성적, 공부, 시험, 학원, 과제, 숙제, 엄마, 아빠, 부모, 잔소리, 가족, 친구, 뒷담, 소외, 우울, 슬퍼, 힘들, 지쳤, 짜증, 괴롭, 눈치, 왕따, 따돌림, 머리아파, 속상
+    const mediumKeywords = ["공부", "성적", "시험", "학원", "과제", "숙제", "엄마", "아빠", "부모", "잔소리", "가족", "친구", "뒷담", "소외", "우울", "슬퍼", "힘들", "지쳤", "짜증", "괴롭", "눈치", "왕따", "따돌림", "머리아파", "속상"];
+    if (mediumKeywords.some(kw => clean.includes(kw))) {
+      return "Medium";
+    }
+    return "Low";
+  };
 
-    if (hasCrisisKeyword) {
+  const simulateCounselingClientSide = (inputText: string, activeQueryId?: number | null) => {
+    const severity = getSeverity(inputText);
+    const cleanInput = (inputText || "").toLowerCase().replace(/\s+/g, "");
+
+    // 1. Crisis / High Severity Interceptor
+    if (severity === "High") {
       return {
         success: true,
         analysis: {
           riskLevel: "Critical",
-          insight: "위기 반응 감지",
-          warmResponse: `마음이 너무 무겁고 힘들어서 진짜 다 놓아버리고 싶을 만큼 막막했구나. 혼자서 너무 지치지 말고, 힘들 땐 24시간 열려 있는 청소년전화 1388이나 모바일 상담 '다들어줄개'(문자 1388)로 꼭 연락해서 편안하게 네 속마음을 들려주면 좋겠어.\n[힘들고 우울한 마음]`,
+          insight: "위기 반응 감지 및 든든한 정서 동행 지지",
+          warmResponse: `진짜 많이 힘들었구나... 형이 지금 네 얘기 진지하게 다 듣고 있어. 절대 혼자 이 아픔을 감당하게 안 할 거야. 이런 마음을 꺼내기까지 얼마나 오랜 시간 무섭고 외로웠을지 감히 내가 다 이해할 순 없겠지만, 이제 내 앞에 털어놨으니 너는 결코 혼자가 아니야. 언제든지 네 목소리에 진심으로 귀 기울여주는 24시간 청소년 전문 상담 서비스가 있으니까, 힘들 때는 망설이지 말고 꼭 손을 뻗어줬으면 좋겠어.\n- 청소년 모바일 상담 '다들어줄개': 문자 1388 / 카카오톡 채널 검색\n- 청소년전화: 국번없이 1388 (24시간 운영)\n[힘들고 우울한 마음]`,
           triggerAlert: true,
-          heartTemperature: 10,
+          heartTemperature: 12, // 차가운 위기 상태 반영
           suggestions: [
-            "억지로 참지 말고 눈 감고 크게 심호흡하기",
-            "가장 신나는 음악 가만히 틀어서 볼륨 작게 들어보기",
-            "청소년 안전 헬프라인인 1388에 마음 담아 가볍게 털어놓기"
+            "혼자 아파하지 말고 24시간 청소년 1388 전문 선생님들께 마음 노크해보기",
+            "따뜻한 물 한 모금 천천히 넘기며 가볍게 숨을 가다듬어보기",
+            "가만히 눈을 감고 세 번 크게 심호흡해보기"
           ]
         },
         matchedReferenceCases: []
@@ -84,23 +96,22 @@ export default function App() {
     let categoryIndex = activeQueryId ? Number(activeQueryId) : null;
 
     if (!categoryIndex) {
-      // Determine by keyword mapping
       if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감") || cleanInput.includes("내가싫") || cleanInput.includes("자아") || cleanInput.includes("성격") || cleanInput.includes("단점") || cleanInput.includes("외모") || cleanInput.includes("못생") || cleanInput.includes("한심") || cleanInput.includes("부족") || cleanInput.includes("실망") || cleanInput.includes("멍청")) {
         categoryIndex = 5; // 자기이해 및 자아상
       } else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통") || cleanInput.includes("외로움") || cleanInput.includes("관계") || cleanInput.includes("남친") || cleanInput.includes("여친") || cleanInput.includes("남자친구") || cleanInput.includes("여자친구") || cleanInput.includes("싸움") || cleanInput.includes("다툼") || cleanInput.includes("단톡") || cleanInput.includes("페메") || cleanInput.includes("카톡") || cleanInput.includes("베프")) {
         categoryIndex = 2; // 인간관계 스트레스
-      } else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("힘들") || cleanInput.includes("눈물") || cleanInput.includes("속상") || cleanInput.includes("지쳐") || cleanInput.includes("아파") || cleanInput.includes("괴롭") || cleanInput.includes("불안") || cleanInput.includes("겁나") || cleanInput.includes("무서워") || cleanInput.includes("답답") || cleanInput.includes("가라앉") || cleanInput.includes("외로")) {
+      } else if (cleanInput.includes("우울") || cleanInput.includes("힘들") || cleanInput.includes("눈물") || cleanInput.includes("속상") || cleanInput.includes("지쳐") || cleanInput.includes("아파") || cleanInput.includes("괴롭") || cleanInput.includes("불안") || cleanInput.includes("겁나") || cleanInput.includes("무서워") || cleanInput.includes("답답") || cleanInput.includes("가라앉") || cleanInput.includes("외로")) {
         categoryIndex = 3; // 힘들고 우울한 마음
       } else if (cleanInput.includes("수면") || cleanInput.includes("잠") || cleanInput.includes("불면") || cleanInput.includes("휴식") || cleanInput.includes("피곤") || cleanInput.includes("졸려") || cleanInput.includes("쉬고싶") || cleanInput.includes("무기력") || cleanInput.includes("침대") || cleanInput.includes("귀차") || cleanInput.includes("만사") || cleanInput.includes("씻기") || cleanInput.includes("쉬자") || cleanInput.includes("피로") || cleanInput.includes("기운")) {
         categoryIndex = 4; // 수면 및 휴식 욕구
       } else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학") || cleanInput.includes("학교") || cleanInput.includes("학업") || cleanInput.includes("과제") || cleanInput.includes("숙제") || cleanInput.includes("쌤") || cleanInput.includes("선생님") || cleanInput.includes("학원") || cleanInput.includes("과외") || cleanInput.includes("야자") || cleanInput.includes("수행")) {
-        categoryIndex = 1; // 공부와 미래 고민 -> [진로 및 학업 고민]
+        categoryIndex = 1; // [진로 및 학업 고민]
       } else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형") || cleanInput.includes("누나") || cleanInput.includes("오빠") || cleanInput.includes("친척") || cleanInput.includes("가정") || cleanInput.includes("잔소리")) {
         categoryIndex = 6; // 가족 갈등
       }
     }
 
-    // 1.5. Casual Greeting Interceptor (일상 인사 가로채기 연동)
+    // 1.5. Casual Greeting Interceptor
     const isCasualGreeting = (text: string): boolean => {
       const clean = text.trim().replace(/[?!\.\s]/g, "");
       const greetingKeywords = [
@@ -165,92 +176,136 @@ export default function App() {
     const sorted = [...scored].sort((a, b) => b.score - a.score);
     const topScoredMatched = sorted.slice(0, 3);
 
-    // Helper to dynamically extract user's concrete fact and respond coolly (10s KakaoTalk style)
+    // Determine fallback content in highly polished, non-larp styles
     const getDynamicEmpatheticIntro = (text: string): { response: string, categoryIndex: number } | null => {
       const clean = text.toLowerCase().replace(/\s+/g, "");
       const numMatch = text.match(/\d+/);
       const numberStr = numMatch ? numMatch[0] : "";
 
-      // 1. [B. 대화 의도 확인 레이어] (먼저 잡아준다)
-      if (clean.includes("들어") || clean.includes("하소연") || clean.includes("상담") || clean.includes("고민") || clean.includes("얘기") || clean.includes("이야기") || clean.includes("속마음") || clean.includes("속얘기") || clean.includes("비밀") || clean.includes("할말") || clean.includes("진지")) {
-        if (clean.includes("들어")) {
+      // 1. [B. 대화 의도 확인 레이어] (단, 이미 구체적인 사건/고통을 함께 말하고 있지 않을 때만 타도록 처리)
+      const hasSpecificMediumFact = ["숙제", "학원", "시험", "공부", "과제", "성적", "친구", "뒷담", "왕따", "가족", "엄마", "아빠", "잔소리"].some(kw => clean.includes(kw));
+
+      if (!hasSpecificMediumFact && (clean.includes("들어") || clean.includes("하소연") || clean.includes("상담") || clean.includes("고민") || clean.includes("얘기") || clean.includes("이야기") || clean.includes("속마음") || clean.includes("속얘기") || clean.includes("비밀") || clean.includes("할말") || clean.includes("진지"))) {
+        
+        // Severity 및 말투 규칙 적용: Medium / Low 에 맞게 다이내믹 톤 조절
+        if (clean.includes("들어") || clean.includes("얘기") || clean.includes("상담") || clean.includes("고민") || clean.includes("이야기")) {
           return {
-            response: "당연하지! 형 귀는 항상 쫑긋 열려 있어ㅋㅋㅋ 어떤 얘기든 편안하게 다 풀어놔 봐. 형이 100% 네 편에서 다 들어줄게.\n[자기이해 및 자아상]",
+            response: severity === "Low" 
+              ? "당연하지! 형 귀는 항상 쫑긋 열려 있어ㅋㅋㅋ 어떤 얘기든 편안하게 다 풀어놓고 얘기해줘. 형이 100% 네 편 돼서 다 들어줄게!\n[자기이해 및 자아상]"
+              : "응, 무슨 고민이든 편안하게 말해 봐. 형이 네 얘기 끝까지 정성껏 들어줄게. 마음속 무거운 짐들 다 형한테 내려놔도 괜찮아.\n[자기이해 및 자아상]",
             categoryIndex: 5
           };
         }
-        if (clean.includes("상담")) {
+        if (clean.includes("넷플") || clean.includes("넷플릭스") || clean.includes("드라마") || clean.includes("애니") || clean.includes("웹툰")) {
           return {
-            response: "상담이라고 하면 너무 딱딱하니까 형한테 편하게 수다 떤다고 생각하자ㅋㅋㅋ 어떤 일 때문에 마음 쓰였어? 털어놔 봐!\n[자기이해 및 자아상]",
+            response: "넷플 정주행이나 만화 정독은 일상의 오아시스 맞지ㅋㅋㅋ 눈 피로하지 않게 조명 잘 켜고 편하게 밤 수다 즐겨!\n[수면 및 휴식 욕구]",
+            categoryIndex: 4
+          };
+        }
+        if (clean.includes("노래방") || clean.includes("코노") || clean.includes("노래")) {
+          return {
+            response: "코노 가서 목 찢어지게 지르고 나면 가슴 뻥 뚫리고 개시원이지ㅋㅋㅋ 오늘 18번 최애 곡 몇 번 예약하고 왔냐?\n[자기이해 및 자아상]",
             categoryIndex: 5
           };
         }
-        if (clean.includes("고민")) {
+        if (clean.includes("덕질") || clean.includes("아이돌") || clean.includes("연예인") || clean.includes("bts") || clean.includes("뉴진스") || clean.includes("에스파")) {
           return {
-            response: "고민 있으면 주저하지 말고 썰 풀어줘! 형이 다 들어주고 같이 멘탈 지켜줄 테니까 편하게 다 꺼내도 돼ㅋㅋㅋ\n[자기이해 및 자아상]",
+            response: "최애 덕질은 진짜 하루 원동력 그 자체지ㅋㅋㅋ 형한테도 최애 영업 좀 해주고 입덕 시켜줘라ㅋㅋㅋ\n[자기이해 및 자아상]",
             categoryIndex: 5
           };
         }
-        if (clean.includes("비밀") || clean.includes("속") || clean.includes("하소연")) {
+        if (clean.includes("심심") || clean.includes("놀자") || clean.includes("뭐해")) {
           return {
-            response: "비밀 한 보따리 털어놓는 거 언제나 대환영이지ㅋㅋㅋ 형 비밀 보장 100%인 거 알지? 아무 걱정 말고 속 시원하게 풀어내 봐!\n[자기이해 및 자아상]",
+            response: "원래 심심할 땐 침대에 누워서 형한테 수다 터는 게 최고의 상책이지ㅋㅋㅋ 재미난 이야기나 일상 썰 좀 들려줘 봐!\n[자기이해 및 자아상]",
             categoryIndex: 5
           };
         }
-        return {
-          response: "당연하지! 형이랑 수다 떠는 거 완전 좋아해ㅋㅋㅋ 털어놓고 싶은 일 있으면 편하게 다 말해줘. 준비 완료다!\n[자기이해 및 자아상]",
-          categoryIndex: 5
-        };
       }
 
-      // 2. [A. 일상 및 제안 레이어]
-      if (clean.includes("마크") || clean.includes("마인크래프트")) {
-        return {
-          response: "마크 진짜 개존잼인 거 인정ㅋㅋㅋ 오늘 온 세계 블록 다 쌓는 밤샘 각이냐? 혹시 멋진 장관 구상 중인 거 있어?\n[수면 및 휴식 욕구]",
-          categoryIndex: 4
-        };
-      }
-      if (clean.includes("롤") || clean.includes("leagueoflegend") || clean.includes("리그오브")) {
-        return {
-          response: "롤 한 판 땡겨주는 건 진짜 최고의 힐링이지ㅋㅋㅋ 오늘 협곡 파괴 캐리각이냐? 브론즈 탈출 연승 쭉쭉 가자!\n[수면 및 휴식 욕구]",
-          categoryIndex: 4
-        };
-      }
-      if (clean.includes("게임") || clean.includes("배그") || clean.includes("발로") || clean.includes("옵치") || clean.includes("피파") || clean.includes("디코") || clean.includes("네오")) {
-        return {
-          response: "게임은 역시 도파민 폭발이고 최고의 스트레스 해소책이지ㅋㅋㅋ 오늘 같이할 듀오나 친구들은 구해놨어?\n[수면 및 휴식 욕구]",
-          categoryIndex: 4
-        };
-      }
-      if (clean.includes("유튜브") || clean.includes("쇼츠") || clean.includes("릴스")) {
-        return {
-          response: "유튜브 쇼츠 손가락으로 주르륵 넘기면 진짜 시간 순삭이지ㅋㅋㅋ 오늘 어떤 웃음벨 썰 봤길래 그래?\n[수면 및 휴식 욕구]",
-          categoryIndex: 4
-        };
-      }
-      if (clean.includes("넷플") || clean.includes("넷플릭스") || clean.includes("드라마") || clean.includes("애니") || clean.includes("웹툰")) {
-        return {
-          response: "넷플 정주행이나 만화 정독은 일상의 오아시스 맞지ㅋㅋㅋ 눈 피로하지 않게 조명 잘 켜고 편하게 밤 수다 즐겨!\n[수면 및 휴식 욕구]",
-          categoryIndex: 4
-        };
-      }
-      if (clean.includes("노래방") || clean.includes("코노") || clean.includes("노래")) {
-        return {
-          response: "코노 가서 목 찢어지게 지르고 나면 가슴 뻥 뚫리고 개시원이지ㅋㅋㅋ 오늘 18번 최애 곡 몇 번 예약하고 왔냐?\n[자기이해 및 자아상]",
-          categoryIndex: 5
-        };
-      }
-      if (clean.includes("덕질") || clean.includes("아이돌") || clean.includes("연예인") || clean.includes("bts") || clean.includes("뉴진스") || clean.includes("에스파")) {
-        return {
-          response: "최애 덕질은 진짜 하루 원동력 그 자체지ㅋㅋㅋ 형한테도 최애 영업 좀 해주고 입덕 시켜줘라ㅋㅋㅋ\n[자기이해 및 자아상]",
-          categoryIndex: 5
-        };
-      }
-      if (clean.includes("심심") || clean.includes("놀자") || clean.includes("뭐해")) {
-        return {
-          response: "원래 심심할 땐 침대에 누워서 형한테 수다 터는 게 최고의 상책이지ㅋㅋㅋ 재미난 이야기나 일상 썰 좀 들려줘 봐!\n[자기이해 및 자아상]",
-          categoryIndex: 5
-        };
+      // 2. [C. 다정한 동네 형/누나 톤 맞춤형 위로 레이어]
+      if (severity === "Medium") {
+        if (clean.includes("엄마") || clean.includes("아빠") || clean.includes("가족") || clean.includes("잔소리")) {
+          return {
+            response: "가장 가깝고 편안해야 할 집이란 울타리에서 마찰이나 소외감을 겪으면 정말 답답하고 몹시 무거웠을 것 같아. 잠시 눈을 붙이거나 네가 좋아하는 음악을 조용히 흘려보내며 마음을 가다듬자.\n[가족 갈등]",
+            categoryIndex: 6
+          };
+        }
+        if (clean.includes("우울") || clean.includes("힘들") || clean.includes("지쳐") || clean.includes("슬퍼")) {
+          return {
+            response: "오늘 여러 감정들과 기분이 깊게 가라앉아서 참 속상하고 지쳤겠어. 힘든 일이나 버거운 마음이 고였다면 혼자 밤새 고민하지 말고 형한테 조곤조곤 다 털어놓아 봐. 차분히 끝까지 들을게.\n[힘들고 우울한 마음]",
+            categoryIndex: 3
+          };
+        }
+        if (clean.includes("피곤") || clean.includes("잠") || clean.includes("졸려") || clean.includes("휴식")) {
+          return {
+            response: "오늘 해야 할 고된 과업들과 긴장감에 몸도 머리도 잔뜩 방전되어 많이 피곤하고 힘겹겠구나. 일련의 잡생각은 잠시 둥둥 떠나보내고 오늘 밤만큼은 따뜻하게 대자로 누워서 푹 숙면을 취하자.\n[수면 및 휴식 욕구]",
+            categoryIndex: 4
+          };
+        }
+        if (clean.includes("숙제")) {
+          const homeworkPhrase = numberStr ? `숙제 ${numberStr}개` : "숙제";
+          return {
+            response: `오늘 ${homeworkPhrase} 때문에 정말 고생 많았어. 혼자서 그거 다 해결하려고 치이다 보니 진짜 마음도 몸도 잔뜩 지쳤겠다. 오늘 밤만큼은 더 압박감 가지지 말고 머리 식히며 푹 자자.\n[진로 및 학업 고민]`,
+            categoryIndex: 1
+          };
+        }
+        if (clean.includes("학원")) {
+          const academyPhrase = numberStr ? `학원 ${numberStr}개` : "학원";
+          return {
+            response: `오늘 ${academyPhrase} 도느라 진짜 고생했어. 그렇게 빡빡하게 이리저리 오가면 정말 진 다 빠지고 마음에 무거운 짐이 생길 텐데, 오늘 밤은 그냥 너만을 위해 편안하게 쉬어 줘.\n[진로 및 학업 고민]`,
+            categoryIndex: 1
+          };
+        }
+        if (clean.includes("시험")) {
+          return {
+            response: "시험 준비하느라 정말 가슴 졸이고 힘들었지. 너무 큰 시험 성적 부담으로 스스로를 깎아내리지 않았으면 좋겠어. 오늘만큼은 너 자신이 제일 애썼으니 가볍게 편한 마음으로 힘내보자.\n[진로 및 학업 고민]",
+            categoryIndex: 1
+          };
+        }
+        if (clean.includes("성적") || clean.includes("공부") || clean.includes("과제")) {
+          return {
+            response: "공부 문제 때문에 머리가 지끈거리고 많이 지쳤겠다. 성적 결과도 물론 신경 쓰이겠지만, 지친 네 마음과 머리에 숨 쉴 구멍을 먼저 채워주는 게 지금 가장 중요해.\n[진로 및 학업 고민]",
+            categoryIndex: 1
+          };
+        }
+        if (clean.includes("친구") || clean.includes("뒷담") || clean.includes("왕따")) {
+          return {
+            response: "친구 관계에서 서럽고 따가운 상처를 느끼거나 눈치 보게 되면 진짜 복잡하고 마음 아프지. 꼬여 있는 관계를 너무 네 탓으로 몰지 마. 네 마음에 상처 안 주는 너만의 편안한 하루를 먼저 찾자.\n[인간관계 스트레스]",
+            categoryIndex: 2
+          };
+        }
+      } else {
+        // Low Severity / General comforts
+        if (clean.includes("엄마") || clean.includes("아빠") || clean.includes("가족") || clean.includes("잔소리")) {
+          return {
+            response: "가장 편하게 쉴 공간에서 가족과의 마찰이나 잔소리를 들으면 진짜 답답하고 속상하지... 이어폰 꽂고 널 편안하게 해주는 음악을 들으며 네 기분을 잠시 달래보자.\n[가족 갈등]",
+            categoryIndex: 6
+          };
+        }
+        if (clean.includes("우울") || clean.includes("힘들") || clean.includes("지쳐") || clean.includes("슬퍼")) {
+          return {
+            response: "오늘따라 많이 가라앉는 기분 때문에 여러모로 지치고 답답했을 것 같아. 어떤 힘든 일들이 널 그렇게 무겁게 만드는지, 혼자 고민하지 말고 형에게 다 털어놓아 줘.\n[힘들고 우울한 마음]",
+            categoryIndex: 3
+          };
+        }
+        if (clean.includes("피곤") || clean.includes("잠") || clean.includes("졸려") || clean.includes("휴식")) {
+          return {
+            response: "몸도 생각도 다 지쳐서 방전되어 버린 것 같네. 복잡한 신경 쓰지 말고, 기운 차리도록 따뜻한 물 한 잔 축이고 이불 포근하게 덮고 오늘은 몸 편히 푹 자자!\n[수면 및 휴식 욕구]",
+            categoryIndex: 4
+          };
+        }
+        if (clean.includes("덕질") || clean.includes("아이돌") || clean.includes("연예인") || clean.includes("bts") || clean.includes("뉴진스") || clean.includes("에스파")) {
+          return {
+            response: "최애 덕질은 진짜 하루 원동력 그 자체지ㅋㅋㅋ 형한테도 최애 영업 좀 해주고 입덕 시켜줘라ㅋㅋㅋ\n[자기이해 및 자아상]",
+            categoryIndex: 5
+          };
+        }
+        if (clean.includes("심심") || clean.includes("놀자") || clean.includes("뭐해")) {
+          return {
+            response: "원래 심심할 땐 침대에 누워서 형한테 수다 터는 게 최고의 상책이지ㅋㅋㅋ 재미난 이야기나 일상 썰 좀 들려줘 봐!\n[자기이해 및 자아상]",
+            categoryIndex: 5
+          };
+        }
       }
 
       // 3. [C. 감정 표출 및 팩트 공감 레이어]
@@ -304,6 +359,7 @@ export default function App() {
           categoryIndex: 4
         };
       }
+
       return null;
     };
 
