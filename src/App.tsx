@@ -99,7 +99,7 @@ export default function App() {
         "어 안녕! 진짜 반가워. 오늘 하루 어떻게 보냈어? 형한테 무슨 일이든 편안하게 들려줘.",
         "오 왔구나! 반가워. 오늘 밤에 무슨 재미있는 수다 떨까? 마음 편하게 얘기해 줘.",
         "안녕안녕! 오늘 하루는 별일 없었어? 무슨 일 있었는지 형한테 다 얘기해 봐. 다 들어줄게.",
-        "안녕! 어서 와. 오늘 네 마음의 날씨는 어때? 맑음이야, 아니면 조금 흐림이야?"
+        "어 왔네! 반가워 반가워. 오늘 하루는 살만했어? 그냥 기분 어땠는지 가볍게 썰 좀 풀어줘."
       ];
       const idx = Math.abs(inputText.length) % greetingResponses.length;
       return {
@@ -154,7 +154,7 @@ export default function App() {
 
     // 1. [자기이해 및 자아상]
     if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감") || cleanInput.includes("내가싫") || cleanInput.includes("자아")) {
-      warmResponse = "자기를 너무 미워하지 않았으면 좋겠어. 누구나 실수하고 서툴 수 있으니까 모두 네 잘못이 절대 아냐. 지금은 너무 무겁게 생각하지 말고 따뜻하게 비춰보자. 너는 그 자체로 충분해.\n[자기이해 및 자아상]";
+      warmResponse = "너무 자책하거나 스스로를 미워하지 마. 원래 누구나 실수할 때도 있고 그런 거지 모두 네 잘못은 아니야. 지금은 무거운 생각 좀 내려놓고 편하게 푹 쉬자.\n[자기이해 및 자아상]";
       riskLevel = "Low Risk";
       insight = "자아상 지지 성찰 유도";
       heartTemp = 28;
@@ -166,7 +166,7 @@ export default function App() {
     }
     // 2. [인간관계 스트레스]
     else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통") || cleanInput.includes("외로움") || cleanInput.includes("관계")) {
-      warmResponse = "친구 일로 스트레스 많이 받고 대화에서 은근 소외감 들었나 보네. 마음고생이 심해 밤잠 설칠 만큼 복잡하겠어. 꼬여버린 관계라도 너무 상처받지 말고, 너를 진심으로 좋아해 주는 사람들의 목소리에 먼저 귀 기울여보자.\n[인간관계 스트레스]";
+      warmResponse = "친구 일로 스트레스가 엄청 많았구나. 대화 나누면서 은근 눈치 보이고 소외감 느끼면 되게 골치 아프지. 꼬여버린 관계 너무 신경 쓰지 말고 널 아껴주는 사람들을 먼저 생각하자.\n[인간관계 스트레스]";
       riskLevel = "Low Risk";
       insight = "소통 극복 지지";
       heartTemp = 30;
@@ -178,7 +178,7 @@ export default function App() {
     }
     // 3. [힘들고 우울한 마음]
     else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("힘들") || cleanInput.includes("눈물") || cleanInput.includes("속상")) {
-      warmResponse = "이야기 들으니까 요즘 마음이 많이 가라앉고 지쳐 보여서 내 가슴도 쓰려. 혼자 끙끙 앓느라 얼마나 아팠을까. 힘든 마음 억지로 이겨내려 애쓰지 말고, 힘든 날엔 그냥 마음 편히 쉬어 가도 괜찮아.\n[힘들고 우울한 마음]";
+      warmResponse = "아 진짜? 오늘 무슨 일 있었어? 지치고 힘든 하루였을 텐데 형한테 편하게 털어놔 봐. 다 들어줄게.\n[힘들고 우울한 마음]";
       riskLevel = "Low Risk";
       insight = "정서적 공감 및 지지";
       heartTemp = 25;
@@ -190,7 +190,7 @@ export default function App() {
     }
     // 4. [수면 및 휴식 욕구]
     else if (cleanInput.includes("수면") || cleanInput.includes("잠") || cleanInput.includes("불면") || cleanInput.includes("휴식") || cleanInput.includes("피곤") || cleanInput.includes("졸려") || cleanInput.includes("지쳐") || cleanInput.includes("쉬고싶") || cleanInput.includes("무기력") || cleanInput.includes("침대")) {
-      warmResponse = "요즘 잠도 제대로 못 자고 몸이랑 마음이 엄청 피곤하고 지쳐 있구나. 누워 있어도 피로가 안 풀리는 기분이지? 지금은 다른 것보다 네 몸과 마음에 온전한 휴식을 선물하는 게 제일 중요해.\n[수면 및 휴식 욕구]";
+      warmResponse = "요즘 피로가 꽉 차서 온몸이 찌뿌둥하고 쉬고 싶은 마음뿐이구나. 눕기만 해도 충전이 안 돼서 더 무기력할 수도 있어. 오늘 밤엔 더 아무 고민 하지 말고 푹 자자.\n[수면 및 휴식 욕구]";
       riskLevel = "Low Risk";
       insight = "수면 위생 및 휴식 권고";
       heartTemp = 24;
@@ -202,7 +202,7 @@ export default function App() {
     }
     // 5. [진로 및 학업 고민]
     else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학") || cleanInput.includes("학교") || cleanInput.includes("학업")) {
-      warmResponse = "성적이나 미래 생각 때문에 불안하고 공부하느라 진짜 많이 지치고 어깨가 무거운 상태구나. 그동안 혼자 애쓰느라 가슴앓이 많았을 텐데, 공부 때문에 너무 스트레스받지 말고 가끔은 숨 돌릴 틈도 만들어 줘.\n[진로 및 학업 고민]";
+      warmResponse = "공부 진짜 하기 싫지, 그거 완전히 팩트고 이해해. 머리 터질 것 같을 때는 억지로 붙들고 있지 말고 쉬엄쉬엄 가자. 과제가 너무 빡세거나 어려운 게 있었어?\n[진로 및 학업 고민]";
       riskLevel = "Low Risk";
       insight = "학업 부담 완화";
       heartTemp = 34;
@@ -214,7 +214,7 @@ export default function App() {
     }
     // 6. [가족 갈등]
     else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("싸움") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형") || cleanInput.includes("누나") || cleanInput.includes("오빠")) {
-      warmResponse = "가장 편히 쉬어야 할 집에서 털어놓지 못하고 사사건건 잔소리에 부딪쳐 답답했겠다. 서러웠을 네 마음을 달래주고 싶네. 부드러운 바람 쐬면서 달콤한 아이스크림 하나 먹고 기분 전환해보는 거 어때?\n[가족 갈등]";
+      warmResponse = "가장 편해야 할 집에서 마찰이 있고 잔소리 들으면 되게 답답하지. 속상했을 만도 하고 엄청 짜증 났겠네. 잠깐 밖에 나가서 부드러운 바람이라도 가볍게 쐬고 머리 식히고 오자.\n[가족 갈등]";
       riskLevel = "Low Risk";
       insight = "가족 불화 환기 지지";
       heartTemp = 35;
