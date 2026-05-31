@@ -58,7 +58,7 @@ export default function App() {
     // 1. Crisis Interceptor
     const cleanInput = (inputText || "").toLowerCase().replace(/\s+/g, "");
     const hasCrisisKeyword = [
-      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "살기싫다", "사라지고싶다", "포기하고싶다", "사라지고 싶다", "포기하고 싶다"
+      "자살", "자해", "죽고싶다", "죽어야지", "죽고파", "죽을래", "살기싫다", "사라지고싶다", "포기하고싶다"
     ].some(kw => cleanInput.includes(kw));
 
     if (hasCrisisKeyword) {
@@ -80,6 +80,26 @@ export default function App() {
       };
     }
 
+    // Determine category based on activeQueryId OR keyword matching
+    let categoryIndex = activeQueryId ? Number(activeQueryId) : null;
+
+    if (!categoryIndex) {
+      // Determine by keyword mapping
+      if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감") || cleanInput.includes("내가싫") || cleanInput.includes("자아") || cleanInput.includes("성격") || cleanInput.includes("단점") || cleanInput.includes("외모") || cleanInput.includes("못생") || cleanInput.includes("한심") || cleanInput.includes("부족") || cleanInput.includes("실망") || cleanInput.includes("멍청")) {
+        categoryIndex = 5; // 자기이해 및 자아상
+      } else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통") || cleanInput.includes("외로움") || cleanInput.includes("관계") || cleanInput.includes("남친") || cleanInput.includes("여친") || cleanInput.includes("남자친구") || cleanInput.includes("여자친구") || cleanInput.includes("싸움") || cleanInput.includes("다툼") || cleanInput.includes("단톡") || cleanInput.includes("페메") || cleanInput.includes("카톡") || cleanInput.includes("베프")) {
+        categoryIndex = 2; // 인간관계 스트레스
+      } else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("힘들") || cleanInput.includes("눈물") || cleanInput.includes("속상") || cleanInput.includes("지쳐") || cleanInput.includes("아파") || cleanInput.includes("괴롭") || cleanInput.includes("불안") || cleanInput.includes("겁나") || cleanInput.includes("무서워") || cleanInput.includes("답답") || cleanInput.includes("가라앉") || cleanInput.includes("외로")) {
+        categoryIndex = 3; // 힘들고 우울한 마음
+      } else if (cleanInput.includes("수면") || cleanInput.includes("잠") || cleanInput.includes("불면") || cleanInput.includes("휴식") || cleanInput.includes("피곤") || cleanInput.includes("졸려") || cleanInput.includes("쉬고싶") || cleanInput.includes("무기력") || cleanInput.includes("침대") || cleanInput.includes("귀차") || cleanInput.includes("만사") || cleanInput.includes("씻기") || cleanInput.includes("쉬자") || cleanInput.includes("피로") || cleanInput.includes("기운")) {
+        categoryIndex = 4; // 수면 및 휴식 욕구
+      } else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학") || cleanInput.includes("학교") || cleanInput.includes("학업") || cleanInput.includes("과제") || cleanInput.includes("숙제") || cleanInput.includes("쌤") || cleanInput.includes("선생님") || cleanInput.includes("학원") || cleanInput.includes("과외") || cleanInput.includes("야자") || cleanInput.includes("수행")) {
+        categoryIndex = 1; // 공부와 미래 고민 -> [진로 및 학업 고민]
+      } else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형") || cleanInput.includes("누나") || cleanInput.includes("오빠") || cleanInput.includes("친척") || cleanInput.includes("가정") || cleanInput.includes("잔소리")) {
+        categoryIndex = 6; // 가족 갈등
+      }
+    }
+
     // 1.5. Casual Greeting Interceptor (일상 인사 가로채기 연동)
     const isCasualGreeting = (text: string): boolean => {
       const clean = text.trim().replace(/[?!\.\s]/g, "");
@@ -87,15 +107,14 @@ export default function App() {
         "안녕", "안녕하세요", "반가워", "반갑다", "반갑네", "반가워요", "나도반가워", "하이", "하이요", "hi", "hello", "안뇽", "안농", "방가", "노아야", "노아안녕", "안녕노아"
       ];
       const worryKeywords = [
-        "힘들", "슬퍼", "우울", "자책", "자살", "자해", "죽고", "짜증", "공부", "성적", "시험", "엄마", "아빠"
+        "힘들", "슬퍼", "우울", "자책", "자살", "자해", "죽고", "짜증", "공부", "성적", "시험", "엄마", "아빠", "학원", "숙제", "친구", "관계"
       ];
       const hasWorry = worryKeywords.some(w => clean.includes(w));
       if (hasWorry) return false;
       return greetingKeywords.some(g => clean === g || clean.startsWith(g)) && clean.length <= 12;
     };
 
-    const isChatWithHistory = !activeQueryId && freeChatHistory.length > 1;
-    if (!isChatWithHistory && isCasualGreeting(inputText)) {
+    if (!activeQueryId && isCasualGreeting(inputText)) {
       const greetingResponses = [
         "어 안녕! 진짜 반가워. 오늘 하루 어떻게 보냈어? 형한테 무슨 일이든 편안하게 들려줘.",
         "오 왔구나! 반가워. 오늘 밤에 무슨 재미있는 수다 떨까? 마음 편하게 얘기해 줘.",
@@ -147,14 +166,15 @@ export default function App() {
     const topScoredMatched = sorted.slice(0, 3);
 
     // Default warm responses depending on keywords
-    let warmResponse = "오늘 하루는 어떻게 보냈어? 무슨 재미있는 일이나 고민거리가 있었는지 형한테 편하게 얘기해 줘. 다 들어줄게!\n[자기이해 및 자아상]";
+    let warmResponse = "";
     let riskLevel = "Low Risk";
     let insight = "일반 마음 공감지평";
     let heartTemp = 36.5;
     let suggestions = ["편안히 심호흡 3번 하기", "눈을 감고 10초간 쉬어 보기", "따뜻한 물 한 잔 마시며 기지개 켜기"];
 
-    // 1. [자기이해 및 자아상]
-    if (cleanInput.includes("자책") || cleanInput.includes("실수") || cleanInput.includes("내탓") || cleanInput.includes("바보") || cleanInput.includes("모양") || cleanInput.includes("자존감") || cleanInput.includes("내가싫") || cleanInput.includes("자아")) {
+    // Set response text based on category index
+    if (categoryIndex === 5) {
+      // 5. [자기이해 및 자아상]
       warmResponse = "너무 자책하거나 스스로를 미워하지 마. 원래 누구나 실수할 때도 있고 그런 거지 모두 네 잘못은 아니야. 지금은 무거운 생각 좀 내려놓고 편하게 푹 쉬자.\n[자기이해 및 자아상]";
       riskLevel = "Low Risk";
       insight = "자아상 지지 성찰 유도";
@@ -164,9 +184,8 @@ export default function App() {
         "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
         "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
       ];
-    }
-    // 2. [인간관계 스트레스]
-    else if (cleanInput.includes("친구") || cleanInput.includes("뒷담") || cleanInput.includes("따돌") || cleanInput.includes("소외") || cleanInput.includes("소극") || cleanInput.includes("사회성") || cleanInput.includes("왕짜") || cleanInput.includes("왕따") || cleanInput.includes("소통") || cleanInput.includes("외로움") || cleanInput.includes("관계")) {
+    } else if (categoryIndex === 2) {
+      // 2. [인간관계 스트레스]
       warmResponse = "친구 일로 스트레스가 엄청 많았구나. 대화 나누면서 은근 눈치 보이고 소외감 느끼면 되게 골치 아프지. 꼬여버린 관계 너무 신경 쓰지 말고 널 아껴주는 사람들을 먼저 생각하자.\n[인간관계 스트레스]";
       riskLevel = "Low Risk";
       insight = "소통 극복 지지";
@@ -176,9 +195,8 @@ export default function App() {
         "나에게 가볍게 인사해 주었던 고마운 친구의 눈빛 떠올리기",
         "메신저 상태 메세지에 너무 흔들리지 않기"
       ];
-    }
-    // 3. [힘들고 우울한 마음]
-    else if (cleanInput.includes("슬픔") || cleanInput.includes("우울") || cleanInput.includes("힘들") || cleanInput.includes("눈물") || cleanInput.includes("속상")) {
+    } else if (categoryIndex === 3) {
+      // 3. [힘들고 우울한 마음]
       warmResponse = "아 진짜? 오늘 무슨 일 있었어? 지치고 힘든 하루였을 텐데 형한테 편하게 털어놔 봐. 다 들어줄게.\n[힘들고 우울한 마음]";
       riskLevel = "Low Risk";
       insight = "정서적 공감 및 지지";
@@ -188,9 +206,8 @@ export default function App() {
         "아무 생각 없이 따뜻한 차 한 잔 우려 마시기",
         "네 속마음을 일기장에 편안하게 끄적여보기"
       ];
-    }
-    // 4. [수면 및 휴식 욕구]
-    else if (cleanInput.includes("수면") || cleanInput.includes("잠") || cleanInput.includes("불면") || cleanInput.includes("휴식") || cleanInput.includes("피곤") || cleanInput.includes("졸려") || cleanInput.includes("지쳐") || cleanInput.includes("쉬고싶") || cleanInput.includes("무기력") || cleanInput.includes("침대")) {
+    } else if (categoryIndex === 4) {
+      // 4. [수면 및 휴식 욕구]
       warmResponse = "요즘 피로가 꽉 차서 온몸이 찌뿌둥하고 쉬고 싶은 마음뿐이구나. 눕기만 해도 충전이 안 돼서 더 무기력할 수도 있어. 오늘 밤엔 더 아무 고민 하지 말고 푹 자자.\n[수면 및 휴식 욕구]";
       riskLevel = "Low Risk";
       insight = "수면 위생 및 휴식 권고";
@@ -200,9 +217,8 @@ export default function App() {
         "잠들기 30분 전에는 스마트폰 멀리 치워두기",
         "토닥토닥 내 목덜미를 가볍게 마사지해 주기"
       ];
-    }
-    // 5. [진로 및 학업 고민]
-    else if (cleanInput.includes("성적") || cleanInput.includes("공부") || cleanInput.includes("시험") || cleanInput.includes("진로") || cleanInput.includes("미래") || cleanInput.includes("대학") || cleanInput.includes("학교") || cleanInput.includes("학업")) {
+    } else if (categoryIndex === 1) {
+      // 1. [진로 및 학업 고민]
       warmResponse = "공부 진짜 하기 싫지, 그거 완전히 팩트고 이해해. 머리 터질 것 같을 때는 억지로 붙들고 있지 말고 쉬엄쉬엄 가자. 과제가 너무 빡세거나 어려운 게 있었어?\n[진로 및 학업 고민]";
       riskLevel = "Low Risk";
       insight = "학업 부담 완화";
@@ -212,9 +228,8 @@ export default function App() {
         "좋아하는 달콤한 간식거리 한 입 쏙 물고 씹기",
         "오늘 하루도 충분히 애썼다고 다정하게 스스로 칭찬하기"
       ];
-    }
-    // 6. [가족 갈등]
-    else if (cleanInput.includes("가족") || cleanInput.includes("엄마") || cleanInput.includes("아빠") || cleanInput.includes("부모") || cleanInput.includes("싸움") || cleanInput.includes("동생") || cleanInput.includes("언니") || cleanInput.includes("형") || cleanInput.includes("누나") || cleanInput.includes("오빠")) {
+    } else if (categoryIndex === 6) {
+      // 6. [가족 갈등]
       warmResponse = "가장 편해야 할 집에서 마찰이 있고 잔소리 들으면 되게 답답하지. 속상했을 만도 하고 엄청 짜증 났겠네. 잠깐 밖에 나가서 부드러운 바람이라도 가볍게 쐬고 머리 식히고 오자.\n[가족 갈등]";
       riskLevel = "Low Risk";
       insight = "가족 불화 환기 지지";
@@ -224,6 +239,17 @@ export default function App() {
         "이어폰 꽂고 마음이 가벼워지는 잔잔한 음악 듣기",
         "내 아늑한 베개 껴안고 깊이 숨 고르기"
       ];
+    } else {
+      // Natural dialogue fallback logic when NO keywords or indices matched!
+      // Provide dynamic, empathetic continuers, preventing the "greetings loop"
+      const continuousPrompts = [
+        "아 진짜? 그런 생각이 들었구나. 마음이 복잡하고 지칠 텐데, 무슨 일이 있었는지 형한테 편안하게 다 얘기해 줘. 다 들어줄게.\n[자기이해 및 자아상]",
+        "그랬구나, 속상했겠다. 요즘 널 머리 아프게 만드는 원인이 복잡하게 꼬여서 그런가 봐. 자세한 썰 좀 형한테 들려줄 수 있어?\n[인간관계 스트레스]",
+        "살다 보면 정말 답답하고 맘대로 안 풀리는 고비들이 찾아오곤 해. 지금 어떤 마음이 너를 제일 힘들게 만드는지 편하게 털어놔 봐.\n[힘들고 우울한 마음]",
+        "그 마음 완전히 공감하지. 혼자 안고 있으면 끙끙 앓다가 탈 나니까, 털어놓고 싶은 만큼만 가볍게 형한테 털어내 봐.\n[자기이해 및 자아상]"
+      ];
+      const idx = Math.abs(inputText.length) % continuousPrompts.length;
+      warmResponse = continuousPrompts[idx];
     }
 
     return {
@@ -424,6 +450,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentInput: text,
+          contents: text,
           activeQueryId: pillarId
         })
       });
@@ -781,6 +808,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentInput: studentMessageText,
+          contents: studentMessageText,
           chatHistory: chatContextHistory
         })
       });

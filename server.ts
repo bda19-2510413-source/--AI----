@@ -120,26 +120,26 @@ async function findMatchingCases(inputText: string, limit: number = 3) {
 // --- API ENDPOINTS ---
 
 // 0. Get database status
-app.get("/api/db/status", (req, res) => {
+app.get("/api/db/status/?", (req, res) => {
   res.json({
     neon: !!process.env.DATABASE_URL
   });
 });
 
 // 1. Get the list of 6 standard inquiries
-app.get("/api/db/queries", async (req, res) => {
+app.get("/api/db/queries/?", async (req, res) => {
   const queries = await getQueries();
   res.json({ queries });
 });
 
 // 2. Get all custom cases
-app.get("/api/db/cases", async (req, res) => {
+app.get("/api/db/cases/?", async (req, res) => {
   const cases = await getCases();
   res.json({ cases });
 });
 
 // 3. Add a single counseling record
-app.post("/api/db/case", async (req, res) => {
+app.post("/api/db/case/?", async (req, res) => {
   const { queryId, category, studentResponse, idealResponse, riskLevel, devCode } = req.body;
   const headerCode = req.headers["x-developer-code"];
   if (!checkDevAuth(devCode) && !checkDevAuth(headerCode)) {
@@ -170,7 +170,7 @@ app.post("/api/db/case", async (req, res) => {
 });
 
 // 4. Delete a counseling record
-app.post("/api/db/case/delete", async (req, res) => {
+app.post("/api/db/case/delete/?", async (req, res) => {
   const { id, devCode } = req.body;
   const headerCode = req.headers["x-developer-code"];
   if (!checkDevAuth(devCode) && !checkDevAuth(headerCode)) {
@@ -189,7 +189,7 @@ app.post("/api/db/case/delete", async (req, res) => {
 });
 
 // 5. Bulk upload parsed texts (JSON, CSV or unstructured lines of records)
-app.post("/api/db/cases/bulk", async (req, res) => {
+app.post("/api/db/cases/bulk/?", async (req, res) => {
   const { textData, format, devCode } = req.body;
   const headerCode = req.headers["x-developer-code"];
   if (!checkDevAuth(devCode) && !checkDevAuth(headerCode)) {
@@ -313,8 +313,9 @@ app.post("/api/db/cases/bulk", async (req, res) => {
 });
 
 // 6. Real-time Diagnostic Evaluation or Chat Counselor Response
-app.post("/api/counsel/analyze", async (req, res) => {
-  const { currentInput, activeQueryId, chatHistory } = req.body;
+app.post("/api/counsel/analyze/?", async (req, res) => {
+  const currentInput = req.body.currentInput || req.body.contents;
+  const { activeQueryId, chatHistory } = req.body;
   if (!currentInput) {
     return res.status(400).json({ error: "상담 또는 진단을 위한 대화 내용이 존재하지 않습니다." });
   }
