@@ -171,6 +171,89 @@ export default function App() {
       const numMatch = text.match(/\d+/);
       const numberStr = numMatch ? numMatch[0] : "";
 
+      // 1. [B. 대화 의도 확인 레이어] (먼저 잡아준다)
+      if (clean.includes("들어") || clean.includes("하소연") || clean.includes("상담") || clean.includes("고민") || clean.includes("얘기") || clean.includes("이야기") || clean.includes("속마음") || clean.includes("속얘기") || clean.includes("비밀") || clean.includes("할말") || clean.includes("진지")) {
+        if (clean.includes("들어")) {
+          return {
+            response: "당연하지! 형 귀는 항상 쫑긋 열려 있어ㅋㅋㅋ 어떤 얘기든 편안하게 다 풀어놔 봐. 형이 100% 네 편에서 다 들어줄게.\n[자기이해 및 자아상]",
+            categoryIndex: 5
+          };
+        }
+        if (clean.includes("상담")) {
+          return {
+            response: "상담이라고 하면 너무 딱딱하니까 형한테 편하게 수다 떤다고 생각하자ㅋㅋㅋ 어떤 일 때문에 마음 쓰였어? 털어놔 봐!\n[자기이해 및 자아상]",
+            categoryIndex: 5
+          };
+        }
+        if (clean.includes("고민")) {
+          return {
+            response: "고민 있으면 주저하지 말고 썰 풀어줘! 형이 다 들어주고 같이 멘탈 지켜줄 테니까 편하게 다 꺼내도 돼ㅋㅋㅋ\n[자기이해 및 자아상]",
+            categoryIndex: 5
+          };
+        }
+        if (clean.includes("비밀") || clean.includes("속") || clean.includes("하소연")) {
+          return {
+            response: "비밀 한 보따리 털어놓는 거 언제나 대환영이지ㅋㅋㅋ 형 비밀 보장 100%인 거 알지? 아무 걱정 말고 속 시원하게 풀어내 봐!\n[자기이해 및 자아상]",
+            categoryIndex: 5
+          };
+        }
+        return {
+          response: "당연하지! 형이랑 수다 떠는 거 완전 좋아해ㅋㅋㅋ 털어놓고 싶은 일 있으면 편하게 다 말해줘. 준비 완료다!\n[자기이해 및 자아상]",
+          categoryIndex: 5
+        };
+      }
+
+      // 2. [A. 일상 및 제안 레이어]
+      if (clean.includes("마크") || clean.includes("마인크래프트")) {
+        return {
+          response: "마크 진짜 개존잼인 거 인정ㅋㅋㅋ 오늘 온 세계 블록 다 쌓는 밤샘 각이냐? 혹시 멋진 장관 구상 중인 거 있어?\n[수면 및 휴식 욕구]",
+          categoryIndex: 4
+        };
+      }
+      if (clean.includes("롤") || clean.includes("leagueoflegend") || clean.includes("리그오브")) {
+        return {
+          response: "롤 한 판 땡겨주는 건 진짜 최고의 힐링이지ㅋㅋㅋ 오늘 협곡 파괴 캐리각이냐? 브론즈 탈출 연승 쭉쭉 가자!\n[수면 및 휴식 욕구]",
+          categoryIndex: 4
+        };
+      }
+      if (clean.includes("게임") || clean.includes("배그") || clean.includes("발로") || clean.includes("옵치") || clean.includes("피파") || clean.includes("디코") || clean.includes("네오")) {
+        return {
+          response: "게임은 역시 도파민 폭발이고 최고의 스트레스 해소책이지ㅋㅋㅋ 오늘 같이할 듀오나 친구들은 구해놨어?\n[수면 및 휴식 욕구]",
+          categoryIndex: 4
+        };
+      }
+      if (clean.includes("유튜브") || clean.includes("쇼츠") || clean.includes("릴스")) {
+        return {
+          response: "유튜브 쇼츠 손가락으로 주르륵 넘기면 진짜 시간 순삭이지ㅋㅋㅋ 오늘 어떤 웃음벨 썰 봤길래 그래?\n[수면 및 휴식 욕구]",
+          categoryIndex: 4
+        };
+      }
+      if (clean.includes("넷플") || clean.includes("넷플릭스") || clean.includes("드라마") || clean.includes("애니") || clean.includes("웹툰")) {
+        return {
+          response: "넷플 정주행이나 만화 정독은 일상의 오아시스 맞지ㅋㅋㅋ 눈 피로하지 않게 조명 잘 켜고 편하게 밤 수다 즐겨!\n[수면 및 휴식 욕구]",
+          categoryIndex: 4
+        };
+      }
+      if (clean.includes("노래방") || clean.includes("코노") || clean.includes("노래")) {
+        return {
+          response: "코노 가서 목 찢어지게 지르고 나면 가슴 뻥 뚫리고 개시원이지ㅋㅋㅋ 오늘 18번 최애 곡 몇 번 예약하고 왔냐?\n[자기이해 및 자아상]",
+          categoryIndex: 5
+        };
+      }
+      if (clean.includes("덕질") || clean.includes("아이돌") || clean.includes("연예인") || clean.includes("bts") || clean.includes("뉴진스") || clean.includes("에스파")) {
+        return {
+          response: "최애 덕질은 진짜 하루 원동력 그 자체지ㅋㅋㅋ 형한테도 최애 영업 좀 해주고 입덕 시켜줘라ㅋㅋㅋ\n[자기이해 및 자아상]",
+          categoryIndex: 5
+        };
+      }
+      if (clean.includes("심심") || clean.includes("놀자") || clean.includes("뭐해")) {
+        return {
+          response: "원래 심심할 땐 침대에 누워서 형한테 수다 터는 게 최고의 상책이지ㅋㅋㅋ 재미난 이야기나 일상 썰 좀 들려줘 봐!\n[자기이해 및 자아상]",
+          categoryIndex: 5
+        };
+      }
+
+      // 3. [C. 감정 표출 및 팩트 공감 레이어]
       if (clean.includes("숙제")) {
         const homeworkPhrase = numberStr ? `숙제 ${numberStr}개` : "숙제";
         return {
@@ -191,22 +274,34 @@ export default function App() {
           categoryIndex: 1
         };
       }
-      if (clean.includes("공부")) {
+      if (clean.includes("성적") || clean.includes("공부") || clean.includes("과제")) {
         return {
-          response: `공부 계속 붙잡고 있으면 진짜 정신 나가지ㅋㅋㅋ 뇌 일시정지 오기 전에 오늘은 그냥 일찍 자는 게 최고의 상책이야.\n[진로 및 학업 고민]`,
+          response: `공부 계속 붙잡고 있으면 진짜 정신 가출하지ㅋㅋㅋ 뇌 정지오기 전에 오늘은 그냥 일찍 자고 푹 쉬는 게 최고의 정답 맞다.\n[진로 및 학업 고민]`,
           categoryIndex: 1
         };
       }
       if (clean.includes("친구") || clean.includes("뒷담") || clean.includes("왕따")) {
         return {
-          response: `친구 일로 눈치 보고 기 빨리면 진짜 에바지ㅋㅋㅋ 그 마음 나도 너무 잘 안다. 오늘 꼬여버린 관계 너무 스트레스받지 말고 널 더 소중히 여기자.\n[인간관계 스트레스]`,
+          response: `친구 일로 소외감 느끼고 기 빨리면 진짜 에바지ㅋㅋㅋ 그 마음 나도 너무 잘 안다. 오늘 꼬여버린 관계 너무 스트레스받지 말고 널 더 1순위로 아껴주자.\n[인간관계 스트레스]`,
           categoryIndex: 2
         };
       }
       if (clean.includes("엄마") || clean.includes("아빠") || clean.includes("가족") || clean.includes("잔소리")) {
         return {
-          response: `가장 편해야 할 집에서 잔소리 들으면 진짜 속상하고 멘탈 터지지... 잠깐 밖에 나가서 찬 바람이라도 쐬고 오거나 방에서 음악 들으며 기분 식히자.\n[가족 갈등]`,
+          response: `가장 편안해야 할 집에서 가족들에게 잔소리 들으면 진짜 답답하고 속상하지... 잠깐 시원시원한 바람 쐬러 산책 갔다 오거나 가만히 좋아하는 음악 들어보자.\n[가족 갈등]`,
           categoryIndex: 6
+        };
+      }
+      if (clean.includes("우울") || clean.includes("힘들") || clean.includes("지쳐") || clean.includes("슬퍼")) {
+        return {
+          response: `진짜 속상하고 지쳤겠네. 오늘 뭔가 기분 쭉 처지게 만드는 서럽거나 복잡한 일이 있었나 본데, 힘든 일 있으면 형이 다 들어줄 테니까 마음 편하게 다 얘기해 봐.\n[힘들고 우울한 마음]`,
+          categoryIndex: 3
+        };
+      }
+      if (clean.includes("피곤") || clean.includes("잠") || clean.includes("졸려") || clean.includes("휴식")) {
+        return {
+          response: `피로가 진짜 잔뜩 고여서 온몸이 지끈거리는 모양이구나. 다른 복잡한 생각 싹 다 뒤로 치워두고 오늘 밤은 그냥 대자로 뻗어서 일찍 푹 자자!\n[수면 및 휴식 욕구]`,
+          categoryIndex: 4
         };
       }
       return null;
@@ -232,6 +327,18 @@ export default function App() {
         insight = "소통 극복 지지";
         heartTemp = 30;
         suggestions = ["편안히 음악 들으며 마음 식히기", "친지나 나를 정말 지지해주는 사람 생각하기"];
+      } else if (categoryIndex === 3) {
+        insight = "정서적 공감 및 지지";
+        heartTemp = 25;
+        suggestions = ["포근한 이불 덮고 가만히 누워있기", "아무 생각 없이 차 한 잔 마시기"];
+      } else if (categoryIndex === 4) {
+        insight = "수면 위생 및 일상 휴양";
+        heartTemp = 42;
+        suggestions = ["편하게 뒹굴거리며 뇌 식히기", "핸드폰 잠시 내려두고 물 마시기", "스트레칭 가볍게 쭉 켜기"];
+      } else if (categoryIndex === 5) {
+        insight = "자아상 소통 및 경청 준비";
+        heartTemp = 38;
+        suggestions = ["편안하게 속얘기 다 털어놓기", "형의 온기 가득한 답변 잘 읽어보기", "크게 기지개 한 번 켜보기"];
       } else if (categoryIndex === 6) {
         insight = "가족 불화 환기 지지";
         heartTemp = 35;
@@ -852,6 +959,32 @@ export default function App() {
     const studentMessageText = chatInput;
     setChatInput("");
 
+    // Helper to dynamically match and sync analysis pillars in the left side dashboard
+    const tryUpdatePillarFromResponse = (responseTxt: string, analysisObj: any, refCases: any[]) => {
+      if (!responseTxt) return;
+      let matchedPillarId: number | null = null;
+      if (responseTxt.includes("[진로 및 학업 고민]")) matchedPillarId = 1;
+      else if (responseTxt.includes("[인간관계 스트레스]")) matchedPillarId = 2;
+      else if (responseTxt.includes("[힘들고 우울한 마음]")) matchedPillarId = 3;
+      else if (responseTxt.includes("[수면 및 휴식 욕구]")) matchedPillarId = 4;
+      else if (responseTxt.includes("[자기이해 및 자아상]")) matchedPillarId = 5;
+      else if (responseTxt.includes("[가족 갈등]")) matchedPillarId = 6;
+
+      if (matchedPillarId) {
+        setPillarAnalysis(prev => ({
+          ...prev,
+          [matchedPillarId!]: {
+            riskLevel: analysisObj.riskLevel || "Low Risk",
+            insight: analysisObj.insight || "실시간 일상 소통 및 교감", 
+            warmResponse: responseTxt,
+            heartTemperature: analysisObj.heartTemperature || 36.5,
+            suggestions: analysisObj.suggestions || ["잠시 기지개를 시원하게 켜보자", "편히 물 한 모금 머금기"],
+            matchedReferenceCases: refCases || []
+          }
+        }));
+      }
+    };
+
     // 1. Add student message to context list
     const studentMessage: Message = {
       id: `student-msg-${Date.now()}`,
@@ -900,6 +1033,9 @@ export default function App() {
         if (data.analysis.riskLevel) {
           setLastAnalyzedRisk(data.analysis.riskLevel);
         }
+
+        // Sync to left dashboard
+        tryUpdatePillarFromResponse(data.analysis.warmResponse, data.analysis, data.matchedReferenceCases);
       } else {
         throw new Error(data.error || "분석 이상 감지");
       }
@@ -921,6 +1057,9 @@ export default function App() {
       if (result.analysis.riskLevel) {
         setLastAnalyzedRisk(result.analysis.riskLevel);
       }
+
+      // Sync to left dashboard
+      tryUpdatePillarFromResponse(result.analysis.warmResponse, result.analysis, result.matchedReferenceCases);
     } finally {
       setChatAnalyzing(false);
     }
