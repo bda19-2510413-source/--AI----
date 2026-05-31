@@ -165,6 +165,55 @@ export default function App() {
     const sorted = [...scored].sort((a, b) => b.score - a.score);
     const topScoredMatched = sorted.slice(0, 3);
 
+    // Helper to dynamically extract user's concrete fact and respond coolly (10s KakaoTalk style)
+    const getDynamicEmpatheticIntro = (text: string): { response: string, categoryIndex: number } | null => {
+      const clean = text.toLowerCase().replace(/\s+/g, "");
+      const numMatch = text.match(/\d+/);
+      const numberStr = numMatch ? numMatch[0] : "";
+
+      if (clean.includes("숙제")) {
+        const homeworkPhrase = numberStr ? `숙제 ${numberStr}개` : "숙제";
+        return {
+          response: `${homeworkPhrase}는 솔직히 선 넘었지ㅋㅋㅋ 그걸 사람이 하루 만에 다 하냐? 진짜 에바다, 멘탈 터졌겠네. 오늘 밤엔 그냥 숙제 대충 팽개치고 일단 푹 쉬자.\n[진로 및 학업 고민]`,
+          categoryIndex: 1
+        };
+      }
+      if (clean.includes("학원")) {
+        const academyPhrase = numberStr ? `학원 ${numberStr}개` : "학원";
+        return {
+          response: `오늘 ${academyPhrase} 뺑뺑이 도느라 진짜 고생 많았다. 학원을 그렇게 도는 건 진짜 선 넘었지ㅋㅋㅋ 멘탈 터졌을 텐데 오늘 밤은 무조건 쉬엄쉬엄 가자.\n[진로 및 학업 고민]`,
+          categoryIndex: 1
+        };
+      }
+      if (clean.includes("시험")) {
+        return {
+          response: `시험 때문에 머리 터질 뻔했겠네. 너무 부담 갖지 마, 기운 빠지는데 오늘 시험 생각은 다 치우고 너 좋아하는 거 하면서 맛있는 거 먹자.\n[진로 및 학업 고민]`,
+          categoryIndex: 1
+        };
+      }
+      if (clean.includes("공부")) {
+        return {
+          response: `공부 계속 붙잡고 있으면 진짜 정신 나가지ㅋㅋㅋ 뇌 일시정지 오기 전에 오늘은 그냥 일찍 자는 게 최고의 상책이야.\n[진로 및 학업 고민]`,
+          categoryIndex: 1
+        };
+      }
+      if (clean.includes("친구") || clean.includes("뒷담") || clean.includes("왕따")) {
+        return {
+          response: `친구 일로 눈치 보고 기 빨리면 진짜 에바지ㅋㅋㅋ 그 마음 나도 너무 잘 안다. 오늘 꼬여버린 관계 너무 스트레스받지 말고 널 더 소중히 여기자.\n[인간관계 스트레스]`,
+          categoryIndex: 2
+        };
+      }
+      if (clean.includes("엄마") || clean.includes("아빠") || clean.includes("가족") || clean.includes("잔소리")) {
+        return {
+          response: `가장 편해야 할 집에서 잔소리 들으면 진짜 속상하고 멘탈 터지지... 잠깐 밖에 나가서 찬 바람이라도 쐬고 오거나 방에서 음악 들으며 기분 식히자.\n[가족 갈등]`,
+          categoryIndex: 6
+        };
+      }
+      return null;
+    };
+
+    const dynamicIntro = getDynamicEmpatheticIntro(inputText);
+
     // Default warm responses depending on keywords
     let warmResponse = "";
     let riskLevel = "Low Risk";
@@ -172,84 +221,102 @@ export default function App() {
     let heartTemp = 36.5;
     let suggestions = ["편안히 심호흡 3번 하기", "눈을 감고 10초간 쉬어 보기", "따뜻한 물 한 잔 마시며 기지개 켜기"];
 
-    // Set response text based on category index
-    if (categoryIndex === 5) {
-      // 5. [자기이해 및 자아상]
-      warmResponse = "너무 자책하거나 스스로를 미워하지 마. 원래 누구나 실수할 때도 있고 그런 거지 모두 네 잘못은 아니야. 지금은 무거운 생각 좀 내려놓고 편하게 푹 쉬자.\n[자기이해 및 자아상]";
-      riskLevel = "Low Risk";
-      insight = "자아상 지지 성찰 유도";
-      heartTemp = 28;
-      suggestions = [
-        "스스로에게 '그럴 수 있어, 괜찮아' 소리내어 말해주기",
-        "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
-        "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
-      ];
-    } else if (categoryIndex === 2) {
-      // 2. [인간관계 스트레스]
-      warmResponse = "친구 일로 스트레스가 엄청 많았구나. 대화 나누면서 은근 눈치 보이고 소외감 느끼면 되게 골치 아프지. 꼬여버린 관계 너무 신경 쓰지 말고 널 아껴주는 사람들을 먼저 생각하자.\n[인간관계 스트레스]";
-      riskLevel = "Low Risk";
-      insight = "소통 극복 지지";
-      heartTemp = 30;
-      suggestions = [
-        "거울 앞에 서서 내 입꼬리를 살짝 올려 가볍게 미소 지어보기",
-        "나에게 가볍게 인사해 주었던 고마운 친구의 눈빛 떠올리기",
-        "메신저 상태 메세지에 너무 흔들리지 않기"
-      ];
-    } else if (categoryIndex === 3) {
-      // 3. [힘들고 우울한 마음]
-      warmResponse = "아 진짜? 오늘 무슨 일 있었어? 지치고 힘든 하루였을 텐데 형한테 편하게 털어놔 봐. 다 들어줄게.\n[힘들고 우울한 마음]";
-      riskLevel = "Low Risk";
-      insight = "정서적 공감 및 지지";
-      heartTemp = 25;
-      suggestions = [
-        "좋아하는 포근한 이불 덮고 가만히 누워있기",
-        "아무 생각 없이 따뜻한 차 한 잔 우려 마시기",
-        "네 속마음을 일기장에 편안하게 끄적여보기"
-      ];
-    } else if (categoryIndex === 4) {
-      // 4. [수면 및 휴식 욕구]
-      warmResponse = "요즘 피로가 꽉 차서 온몸이 찌뿌둥하고 쉬고 싶은 마음뿐이구나. 눕기만 해도 충전이 안 돼서 더 무기력할 수도 있어. 오늘 밤엔 더 아무 고민 하지 말고 푹 자자.\n[수면 및 휴식 욕구]";
-      riskLevel = "Low Risk";
-      insight = "수면 위생 및 휴식 권고";
-      heartTemp = 24;
-      suggestions = [
-        "따뜻한 물로 가볍게 샤워하고 침대에 누워보기",
-        "잠들기 30분 전에는 스마트폰 멀리 치워두기",
-        "토닥토닥 내 목덜미를 가볍게 마사지해 주기"
-      ];
-    } else if (categoryIndex === 1) {
-      // 1. [진로 및 학업 고민]
-      warmResponse = "공부 진짜 하기 싫지, 그거 완전히 팩트고 이해해. 머리 터질 것 같을 때는 억지로 붙들고 있지 말고 쉬엄쉬엄 가자. 과제가 너무 빡세거나 어려운 게 있었어?\n[진로 및 학업 고민]";
-      riskLevel = "Low Risk";
-      insight = "학업 부담 완화";
-      heartTemp = 34;
-      suggestions = [
-        "당장 할 분량은 기지개 켜고 5분간 좋아하는 풍경 바라보기",
-        "좋아하는 달콤한 간식거리 한 입 쏙 물고 씹기",
-        "오늘 하루도 충분히 애썼다고 다정하게 스스로 칭찬하기"
-      ];
-    } else if (categoryIndex === 6) {
-      // 6. [가족 갈등]
-      warmResponse = "가장 편해야 할 집에서 마찰이 있고 잔소리 들으면 되게 답답하지. 속상했을 만도 하고 엄청 짜증 났겠네. 잠깐 밖에 나가서 부드러운 바람이라도 가볍게 쐬고 머리 식히고 오자.\n[가족 갈등]";
-      riskLevel = "Low Risk";
-      insight = "가족 불화 환기 지지";
-      heartTemp = 35;
-      suggestions = [
-        "시원하고 달콤한 오렌지 주스나 아이스크림 먹기",
-        "이어폰 꽂고 마음이 가벼워지는 잔잔한 음악 듣기",
-        "내 아늑한 베개 껴안고 깊이 숨 고르기"
-      ];
+    if (dynamicIntro) {
+      warmResponse = dynamicIntro.response;
+      categoryIndex = dynamicIntro.categoryIndex;
+      if (categoryIndex === 1) {
+        insight = "학업 부담 완화";
+        heartTemp = 34;
+        suggestions = ["당장 할 분량은 기지개 켜고 5분간 쉬기", "달콤한 간식거리 한 입 쏙 물어주기", "오늘도 애썼다고 스스로 칭찬하기"];
+      } else if (categoryIndex === 2) {
+        insight = "소통 극복 지지";
+        heartTemp = 30;
+        suggestions = ["편안히 음악 들으며 마음 식히기", "친지나 나를 정말 지지해주는 사람 생각하기"];
+      } else if (categoryIndex === 6) {
+        insight = "가족 불화 환기 지지";
+        heartTemp = 35;
+        suggestions = ["잔잔한 음악 들으며 이어폰 꽂기", "포근한 베개 껴안고 심호흡하기"];
+      }
     } else {
-      // Natural dialogue fallback logic when NO keywords or indices matched!
-      // Provide dynamic, empathetic continuers, preventing the "greetings loop"
-      const continuousPrompts = [
-        "아 진짜? 그런 생각이 들었구나. 마음이 복잡하고 지칠 텐데, 무슨 일이 있었는지 형한테 편안하게 다 얘기해 줘. 다 들어줄게.\n[자기이해 및 자아상]",
-        "그랬구나, 속상했겠다. 요즘 널 머리 아프게 만드는 원인이 복잡하게 꼬여서 그런가 봐. 자세한 썰 좀 형한테 들려줄 수 있어?\n[인간관계 스트레스]",
-        "살다 보면 정말 답답하고 맘대로 안 풀리는 고비들이 찾아오곤 해. 지금 어떤 마음이 너를 제일 힘들게 만드는지 편하게 털어놔 봐.\n[힘들고 우울한 마음]",
-        "그 마음 완전히 공감하지. 혼자 안고 있으면 끙끙 앓다가 탈 나니까, 털어놓고 싶은 만큼만 가볍게 형한테 털어내 봐.\n[자기이해 및 자아상]"
-      ];
-      const idx = Math.abs(inputText.length) % continuousPrompts.length;
-      warmResponse = continuousPrompts[idx];
+      // Set response text based on category index when no concrete dynamic match occurs
+      if (categoryIndex === 5) {
+        // 5. [자기이해 및 자아상]
+        warmResponse = "너무 자책하거나 스스로를 미워하지 마. 원래 누구나 실수할 때도 있고 그런 거지 모두 네 잘못은 아니야. 지금은 무거운 생각 좀 내려놓고 귀찮은 일 다 미루고 푹 쉬자.\n[자기이해 및 자아상]";
+        riskLevel = "Low Risk";
+        insight = "자아상 지지 성찰 유도";
+        heartTemp = 28;
+        suggestions = [
+          "스스로에게 '그럴 수 있어, 괜찮아' 소리내어 말해주기",
+          "나의 오늘 사소한 장점이나 고마운 점 가볍게 한 개 적어보기",
+          "따스한 햇살이 드는 자리에서 따끈한 물 한 모금 마시기"
+        ];
+      } else if (categoryIndex === 2) {
+        // 2. [인간관계 스트레스]
+        warmResponse = "친구 일로 스트레스가 엄청 많았구나. 대화 나누면서 은근 눈치 보이고 소외감 느끼면 되게 골치 아프지. 꼬여버린 관계 너무 신경 쓰지 말고 그냥 널 안 아껴주는 사람들은 잊어버리자.\n[인간관계 스트레스]";
+        riskLevel = "Low Risk";
+        insight = "소통 극복 지지";
+        heartTemp = 30;
+        suggestions = [
+          "거울 앞에 서서 내 입꼬리를 살짝 올려 가볍게 미소 지어보기",
+          "나에게 가볍게 인사해 주었던 고마운 친구의 눈빛 떠올리기",
+          "메신저 상태 메세지에 너무 흔들리지 않기"
+        ];
+      } else if (categoryIndex === 3) {
+        // 3. [힘들고 우울한 마음]
+        warmResponse = "진짜 속상하고 멘탈 터졌겠네. 오늘 너 기분 완전 가라앉게 만드는 일이 있었나 본데, 나쁜 일 다 털어내고 기분 풀자. 진짜 고생 많았어.\n[힘들고 우울한 마음]";
+        riskLevel = "Low Risk";
+        insight = "정서적 공감 및 지지";
+        heartTemp = 25;
+        suggestions = [
+          "좋아하는 포근한 이불 덮고 가만히 누워있기",
+          "아무 생각 없이 따뜻한 차 한 잔 우려 마시기",
+          "네 속마음을 일기장에 편안하게 끄적여보기"
+        ];
+      } else if (categoryIndex === 4) {
+        // 4. [수면 및 휴식 욕구]
+        warmResponse = "요즘 피로가 꽉 차서 온몸이 지끈거리고 쉬고 싶은 마음뿐이구나. 눕기만 해도 충전이 안 돼서 더 무기력할 수도 있어. 오늘 밤엔 더 아무 고민 하지 말고 푹 자자.\n[수면 및 휴식 욕구]";
+        riskLevel = "Low Risk";
+        insight = "수면 위생 및 휴식 권고";
+        heartTemp = 24;
+        suggestions = [
+          "따뜻한 물로 가볍게 샤워하고 침대에 누워보기",
+          "잠들기 30분 전에는 스마트폰 멀리 치워두기",
+          "토닥토닥 내 목덜미를 가볍게 마사지해 주기"
+        ];
+      } else if (categoryIndex === 1) {
+        // 1. [진로 및 학업 고민]
+        warmResponse = "공부 진짜 하기 싫지, 그거 완전히 팩트고 인정해. 머리 터질 것 같을 때는 억지로 붙들고 있지 말고 쉬엄쉬엄 가자. 오늘 밤엔 그냥 편하게 쉬자.\n[진로 및 학업 고민]";
+        riskLevel = "Low Risk";
+        insight = "학업 부담 완화";
+        heartTemp = 34;
+        suggestions = [
+          "당장 할 분량은 기지개 켜고 5분간 좋아하는 풍경 바라보기",
+          "좋아하는 달콤한 간식거리 한 입 쏙 물고 씹기",
+          "오늘 하루도 충분히 애썼다고 다정하게 스스로 칭찬하기"
+        ];
+      } else if (categoryIndex === 6) {
+        // 6. [가족 갈등]
+        warmResponse = "가장 편해야 할 집에서 마찰이 있고 잔소리 들으면 되게 답답하지. 속상했을 만도 하고 엄청 짜증 났겠네. 잠깐 밖에 나가서 부드러운 바람이라도 가볍게 쐬고 머리 식히고 오자.\n[가족 갈등]";
+        riskLevel = "Low Risk";
+        insight = "가족 불화 환기 지지";
+        heartTemp = 35;
+        suggestions = [
+          "시원하고 달콤한 오렌지 주스나 아이스크림 먹기",
+          "이어폰 꽂고 마음이 가벼워지는 잔잔한 음악 듣기",
+          "내 아늑한 베개 껴안고 깊이 숨 고르기"
+        ];
+      } else {
+        // Natural dialogue fallback logic when NO keywords or indices matched!
+        // Provide dynamic, empathetic continuers, preventing the "greetings loop"
+        const continuousPrompts = [
+          "아 진짜? 기분 꿀꿀하고 지치는데 오늘 밤엔 복잡한 일 생각하지 말고 바로 푹 쉬는 게 상책이야. 고생 많았어!\n[자기이해 및 자아상]",
+          "그랬구나, 속상했겠다. 요즘 널 머리 아프게 만드는 일들이 잔뜩 생기는 것 같네. 마음 편하게 털어넣어 가며 날려버리자.\n[인간관계 스트레스]",
+          "마음 복잡할 땐 힘든 일 무조건 털어내는 게 상책이야. 오늘 너 머리 아프게 하는 거 있으면 다 썰 풀어줘, 다 들어줄게.\n[힘들고 우울한 마음]",
+          "그 마음 진짜 공감이지ㅋㅋㅋ 혼자 끙끙 앓아봤자 골치만 아프니까 대충 맛난 거 먹고 털어버리자.\n[자기이해 및 자아상]"
+        ];
+        const idx = Math.abs(inputText.length) % continuousPrompts.length;
+        warmResponse = continuousPrompts[idx];
+      }
     }
 
     return {
